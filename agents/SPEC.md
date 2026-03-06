@@ -2,7 +2,9 @@
 
 ## 1. Purpose
 
-Build a professional, maintainable C++17 CLI tool named `ArchScope` with the executable `archscope` that computes Robert C. Martin package metrics over a C++ code base using a `compile_commands.json` compilation database.
+Build a professional, maintainable C++17 CLI tool named `ArchScope` with the
+executable `archscope` that computes Robert C. Martin package metrics over a
+C++ code base using a `compile_commands.json` compilation database.
 
 Initial metrics (per module):
 - **Abstractness (A)**: `A = Na / (Na + Nc)`
@@ -18,7 +20,8 @@ ArchScope must:
 - Use Clang's AST and semantic analysis (no custom parser).
 - Generate a **Markdown** report.
 
-This repository is designed to be developed **entirely by a generative AI agent** using the processes and constraints described here.
+This repository is designed to be developed **entirely by a generative AI
+agent** using the processes and constraints described here.
 
 ---
 
@@ -27,10 +30,10 @@ This repository is designed to be developed **entirely by a generative AI agent*
 ### In scope (MVP)
 - Read and validate a compilation database (`compile_commands.json`).
 - Run Clang tooling over the compilation database to build ASTs.
-- Support module grouping by:
-  1. **Namespace module** (e.g., `--module=namespace --module-filter=my::ns`)
-  2. **Translation unit module** (each source file entry)
-  3. **Header module** (headers as owners of declarations; see §8.3)
+- Support module grouping by: 1. **Namespace module** (e.g.,
+  `--module=namespace --module-filter=my::ns`) 2. **Translation unit module**
+  (each source file entry) 3. **Header module** (headers as owners of
+  declarations; see §8.3)
 - Compute A, I, D for each module.
 - Write a Markdown report to file.
 
@@ -48,15 +51,15 @@ This repository is designed to be developed **entirely by a generative AI agent*
 
 Canonical invocation:
 ```bash
-archscope path/to/compile_commands.json abstractness instability distance_from_main_sequence --module=namespace --module-filter=my::ns
+archscope path/to/compile_commands.json abstractness instability \
+distance_from_main_sequence --module=namespace \
+--module-filter=my::ns
 ```
 
 #### Positional arguments
 1. `compile_commands_path`: path to `compile_commands.json`
-2. `metrics...`: one or more metric identifiers from:
-   - `abstractness`
-   - `instability`
-   - `distance_from_main_sequence`
+2. `metrics...`: one or more metric identifiers from: - `abstractness` -
+   `instability` - `distance_from_main_sequence`
 
 #### Options
 - `--module=<kind>` where `<kind>` is one of:
@@ -64,12 +67,16 @@ archscope path/to/compile_commands.json abstractness instability distance_from_m
   - `translation_unit`
   - `header`
 - `--module-filter=<string>`
-  - If `--module=namespace`: filter module names by **prefix match** (e.g., `my::ns` matches `my::ns`, `my::ns::detail`).
+  - If `--module=namespace`: filter module names by **prefix match** (e.g.,
+    `my::ns` matches `my::ns`, `my::ns::detail`).
   - If `--module=translation_unit`: filter by file path substring.
   - If `--module=header`: filter by header path substring.
-- `--report=<path>` output Markdown file (default: `architecture-metrics.md` in current working directory)
-- `--project-name=<string>` optional override for report header (default: derived from parent directory of `compile_commands.json`)
-- `--threads=<n>` optional parallelism (default: `std::thread::hardware_concurrency()`; must be clamped to [1..N])
+- `--report=<path>` output Markdown file (default: `architecture-metrics.md` in
+  current working directory)
+- `--project-name=<string>` optional override for report header (default:
+  derived from parent directory of `compile_commands.json`)
+- `--threads=<n>` optional parallelism (default:
+  `std::thread::hardware_concurrency()`; must be clamped to [1..N])
 - `--verbose` increase logging verbosity
 - `--version`
 - `--help`
@@ -100,24 +107,30 @@ Notes:
   - Modules sorted lexicographically by name/path.
   - Metrics listed in the order requested on CLI.
 - Format numbers with:
-  - 3 decimals by default (e.g., `0.500`), unless exact `0` or `1` occurs; then still `0.000` / `1.000` for consistency.
+  - 3 decimals by default (e.g., `0.500`), unless exact `0` or `1` occurs; then
+    still `0.000` / `1.000` for consistency.
 
 ---
 
 ## 4. Definitions and Computation Rules
 
 ### 4.1 What counts as a “type”
-A “type” is any of the following Clang declarations found in the translation unit:
+A “type” is any of the following Clang declarations found in the translation
+unit:
 - `CXXRecordDecl` (class/struct)
-- `ClassTemplateDecl` (counts as a type; abstractness determined from the templated record)
-- `ClassTemplateSpecializationDecl` does **not** count separately if it is an instantiation of a counted template (avoid double counting).
+- `ClassTemplateDecl` (counts as a type; abstractness determined from the
+  templated record)
+- `ClassTemplateSpecializationDecl` does **not** count separately if it is an
+  instantiation of a counted template (avoid double counting).
 - `EnumDecl` is **excluded** from A (treated neither abstract nor concrete).
 - `ConceptDecl` excluded.
 
 ### 4.2 Abstractness (A)
 A type is **abstract** if:
-- It is a C++ class/struct with **at least one pure virtual function**; i.e., `CXXRecordDecl::isAbstract()` is true.
-- OR it is a class declared as `=0` pure virtual method in any base class that makes it abstract (Clang will reflect this in `isAbstract()`).
+- It is a C++ class/struct with **at least one pure virtual function**; i.e.,
+  `CXXRecordDecl::isAbstract()` is true.
+- OR it is a class declared as `=0` pure virtual method in any base class that
+  makes it abstract (Clang will reflect this in `isAbstract()`).
 
 A type is **concrete** if:
 - It is a complete definition (has a definition) and is not abstract.
@@ -132,13 +145,16 @@ Module-level A:
 
 ### 4.3 Couplings (Ce, Ca) and Instability (I)
 
-We define a **module dependency** as: module `M1` depends on module `M2` if within the AST of entities owned by `M1`, there exists at least one **referenced type** or **symbol** that is declared/defined in `M2`.
+We define a **module dependency** as: module `M1` depends on module `M2` if
+within the AST of entities owned by `M1`, there exists at least one
+**referenced type** or **symbol** that is declared/defined in `M2`.
 
 For the MVP, dependencies are computed from **type references**:
 - Base classes (`CXXBaseSpecifier`)
 - Field member types (`FieldDecl::getType()`)
 - Function return types and parameter types (`FunctionDecl`)
-- Using declarations (`UsingDecl`, `UsingDirectiveDecl`) are ignored for dependency purposes (too noisy).
+- Using declarations (`UsingDecl`, `UsingDirectiveDecl`) are ignored for
+  dependency purposes (too noisy).
 - Template arguments: include type arguments when they refer to a user type.
 
 We compute dependencies as **set-based** (no multiplicity):
@@ -159,8 +175,10 @@ Instability:
 
 ### 5.1 High-level components
 - `archscope` (executable): parses args, orchestrates analysis, writes report.
-- `archscope-core` (library): domain model, metric computation, module grouping, report generation logic.
-- `archscope-clang` (library): Clang LibTooling integration, AST visitors, symbol extraction.
+- `archscope-core` (library): domain model, metric computation, module
+  grouping, report generation logic.
+- `archscope-clang` (library): Clang LibTooling integration, AST visitors,
+  symbol extraction.
 - `archscope-tests` (test targets): unit tests + system tests.
 
 ### 5.2 Clean architecture boundaries
@@ -207,7 +225,8 @@ Metrics must be pure functions:
 
 ### 5.6 Error handling policy
 - No exceptions crossing CLI boundary (catch at `main`).
-- Core functions return `Expected<T, Error>` (use `tl::expected` or equivalent).
+- Core functions return `Expected<T, Error>` (use `tl::expected` or
+  equivalent).
 - Errors include:
   - code, message, context.
 
@@ -217,20 +236,24 @@ Metrics must be pure functions:
 
 ### 6.1 Toolchain requirements
 - C++17 compiler: Clang >= 16 or GCC >= 12 for building `ArchScope` itself.
-- LLVM/Clang development packages matching a supported version of Clang tooling libraries.
+- LLVM/Clang development packages matching a supported version of Clang tooling
+  libraries.
 - CMake >= 3.26 recommended.
 - Ninja recommended.
 
 ### 6.2 Required third-party dependencies (MVP)
 - **LLVM/Clang**: LibTooling, clang-cpp, LLVMSupport
 - **CLI11**: argument parsing
-- **fmt**: formatting (or use `std::format` if toolchain supports reliably across platforms)
+- **fmt**: formatting (or use `std::format` if toolchain supports reliably
+  across platforms)
 - **spdlog**: logging (optional in MVP; can be introduced after baseline)
-- **nlohmann/json**: parse compilation database (optional; LLVM JSON is acceptable)
+- **nlohmann/json**: parse compilation database (optional; LLVM JSON is
+  acceptable)
 - **Catch2 v3**: unit tests
 
 Dependency management:
-- Prefer **vcpkg manifest mode** (`vcpkg.json`) OR **Conan 2**. Choose one and standardize. (If already selected by project, follow existing.)
+- Prefer **vcpkg manifest mode** (`vcpkg.json`) OR **Conan 2**. Choose one and
+  standardize. (If already selected by project, follow existing.)
 - Clang/LLVM is typically system-provided; document how to point CMake to it.
 
 ### 6.3 Project layout (mandatory)
@@ -263,7 +286,8 @@ Dependency management:
 ### 7.1 Coding standard
 - C++17, no compiler extensions unless guarded.
 - Use the LLVM coding style as the baseline formatting convention.
-- Enforce formatting via `clang-format` configured for LLVM style (with project-specific overrides only if explicitly documented).
+- Enforce formatting via `clang-format` configured for LLVM style (with
+  project-specific overrides only if explicitly documented).
 - Prefer value semantics; explicit ownership.
 - No raw `new/delete`.
 - Minimize macros.
@@ -282,8 +306,10 @@ Must pass in CI:
 - Use Catch2 for unit tests.
 - Coverage target: “high coverage of core logic”; do not test Clang internals.
 - System tests are mandatory for each increment:
-  - Execute built `archscope` against a **small fixture project** with its own `compile_commands.json`.
-  - Validate output Markdown content exactly (golden file) or by robust parsing.
+  - Execute built `archscope` against a **small fixture project** with its own
+    `compile_commands.json`.
+  - Validate output Markdown content exactly (golden file) or by robust
+    parsing.
 
 All tests follow F.I.R.S.T. principles:
 - Fast, Independent, Repeatable, Self-validating, Timely.
@@ -318,30 +344,39 @@ ADR template (`docs/adr/NNNN-title.md`):
 ## 8. Clang Tooling Integration Details
 
 ### 8.1 Using compilation database
-- Load compilation database with `clang::tooling::CompilationDatabase::loadFromDirectory` or JSON parsing as needed.
-- Ensure support for compile databases generated by CMake and tools like `bear`.
+- Load compilation database with
+  `clang::tooling::CompilationDatabase::loadFromDirectory` or JSON parsing as
+  needed.
+- Ensure support for compile databases generated by CMake and tools like
+  `bear`.
 
 ### 8.2 AST traversal approach
 - Use `clang::tooling::ClangTool` to run a `FrontendAction`.
 - Inside `ASTConsumer`, walk the translation unit with:
   - `RecursiveASTVisitor` OR AST Matchers.
-- For MVP, start with `RecursiveASTVisitor` for explicit control and easier ownership assignment.
+- For MVP, start with `RecursiveASTVisitor` for explicit control and easier
+  ownership assignment.
 
 ### 8.3 Module ownership rules
 Ownership determines where types and dependencies “belong”.
 
 #### Namespace module
-- Owner module id = the **fully qualified namespace name** containing the declaration.
+- Owner module id = the **fully qualified namespace name** containing the
+  declaration.
 - Anonymous namespace: treat as `"<anonymous>"` and include parent scope.
 - Types in global namespace: module id = `"<global>"`.
 
 #### Translation unit module
-- Owner module id = normalized absolute (or project-relative) path of the TU source file.
+- Owner module id = normalized absolute (or project-relative) path of the TU
+  source file.
 
 #### Header module (MVP definition)
-- Owner module id = normalized header path of the file where the type is **defined** (`SourceManager` spelling location).
-- If definition is in a `.cpp`, it becomes its own owner by that file path (still valid).
-- For system headers: ignore types defined in system headers (unless configured later).
+- Owner module id = normalized header path of the file where the type is
+  **defined** (`SourceManager` spelling location).
+- If definition is in a `.cpp`, it becomes its own owner by that file path
+  (still valid).
+- For system headers: ignore types defined in system headers (unless configured
+  later).
 
 ### 8.4 Dependency extraction for MVP
 When visiting a type owned by module M:
@@ -351,7 +386,8 @@ When visiting a type owned by module M:
 
 Ignore dependencies to:
 - Built-in types
-- Standard library/system headers (detected via `SourceManager::isInSystemHeader`)
+- Standard library/system headers (detected via
+  `SourceManager::isInSystemHeader`)
 - Macros expansions when location is invalid
 
 ---
@@ -405,7 +441,8 @@ CI must fail on any gate failure.
 ## 11. Security, Reliability, and Determinism
 
 - `ArchScope` must not execute user-provided commands.
-- Do not interpret compile_commands command strings; use them only as compiler invocation arguments.
+- Do not interpret compile_commands command strings; use them only as compiler
+  invocation arguments.
 - Avoid non-deterministic ordering (sort outputs).
 - Ensure paths are normalized consistently.
 
@@ -415,13 +452,13 @@ CI must fail on any gate failure.
 
 The project is accepted when:
 - `archscope` builds on Linux and macOS (Windows optional if desired later).
-- Running:
-  ```bash
-  archscope tests/system/fixtures/simple/compile_commands.json abstractness instability distance_from_main_sequence --module=namespace
-  ```
-  produces a Markdown report with correct values matching system test expectations.
+- Running: ```bash archscope tests/system/fixtures/simple/compile_commands.json
+  abstractness instability distance_from_main_sequence --module=namespace ```
+  produces a Markdown report with correct values matching system test
+  expectations.
 - All CI gates pass.
-- Docs exist: README, user manual, developer guide, ADRs for non-trivial decisions.
+- Docs exist: README, user manual, developer guide, ADRs for non-trivial
+  decisions.
 - Adding a new metric requires:
   - New metric class + registration
   - Unit tests

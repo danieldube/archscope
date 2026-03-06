@@ -14,11 +14,9 @@
 
 ## Increment 0 — Repository skeleton + CI gates + “Hello CLI”
 
-### Task 0.1 — Create repository scaffolding
-1. Add CMake project skeleton with targets:
-   - `archscope` executable
-   - `archscope_core` library
-   - `archscope_tests` (Catch2)
+### Task 0.1 — Create repository scaffolding [completed]
+1. Add CMake project skeleton with targets: - `archscope` executable -
+   `archscope_core` library - `archscope_tests` (Catch2)
 2. Add `.clang-format`, `.clang-tidy`, `.editorconfig`.
 3. Add `pre-commit` configuration with clang-format and whitespace hooks.
 4. Add GitHub Actions workflow with build + tests + format + tidy steps.
@@ -48,22 +46,23 @@
   - compile args (split safely)
   - working directory
 
-Prefer Clang tooling `CompilationDatabase` APIs where possible; otherwise parse JSON.
+Prefer Clang tooling `CompilationDatabase` APIs where possible; otherwise parse
+JSON.
 
 ### Task 1.3 — Markdown report writer
 - Unit tests for deterministic formatting and ordering.
-- Implement minimal report writer producing the required header + module blocks.
+- Implement minimal report writer producing the required header + module
+  blocks.
 
 **Acceptance**
-- CLI supports:
-  ```bash
-  archscope <compile_db> abstractness --module=translation_unit --report=out.md
-  ```
-  but values can be placeholders (`0.000`) for now.
+- CLI supports: ```bash archscope <compile_db> abstractness
+  --module=translation_unit --report=out.md ``` but values can be placeholders
+  (`0.000`) for now.
 
 **System test**
 - Add a small fixture project with a generated `compile_commands.json`.
-- System test runs `archscope` and compares report to expected placeholder output.
+- System test runs `archscope` and compares report to expected placeholder
+  output.
 
 ---
 
@@ -73,7 +72,8 @@ Prefer Clang tooling `CompilationDatabase` APIs where possible; otherwise parse 
 - Unit tests for `AnalysisResult` assembly from synthetic extracted data.
 
 ### Task 2.2 — Implement Clang tool runner (syntax-only)
-- Integrate `clang::tooling::ClangTool` and a minimal `FrontendAction` that parses TU.
+- Integrate `clang::tooling::ClangTool` and a minimal `FrontendAction` that
+  parses TU.
 - Collect:
   - counted types (class/struct definitions only)
   - their source locations (file path)
@@ -212,7 +212,8 @@ Resolve referenced decl location → owner module.
 ## Increment 8 — Parallel execution + determinism
 
 ### Task 8.1 — Tests first: determinism under parallelism
-- System test runs `archscope` twice with `--threads=1` and `--threads=4`; outputs must match.
+- System test runs `archscope` twice with `--threads=1` and `--threads=4`;
+  outputs must match.
 
 ### Task 8.2 — Implement thread pool execution
 - Parallelize per-TU processing.
@@ -276,4 +277,5 @@ Required ADRs (minimum):
 - All linters pass.
 - Output stable and documented.
 - ADR updated if any non-trivial decision was made.
-- No TODOs for shipped behavior (allowed only for future work, clearly marked and tracked).
+- No TODOs for shipped behavior (allowed only for future work, clearly marked
+  and tracked).
