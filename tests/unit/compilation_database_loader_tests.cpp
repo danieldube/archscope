@@ -41,7 +41,8 @@ void expect_valid_entry(const archscope::core::CompilationDatabaseEntry &entry,
 
 } // namespace
 
-TEST_CASE("loader reads a valid compile_commands json file") {
+TEST_CASE("loader reads a valid compile_commands json file",
+          "[compilation-database]") {
     const std::filesystem::path db_path =
         write_fixture("valid-compile-commands.json",
                       R"json([
@@ -75,7 +76,8 @@ TEST_CASE("loader reads a valid compile_commands json file") {
                        {"clang++", "-std=c++17", "-Iinclude", "src/lib.cpp"});
 }
 
-TEST_CASE("loader reports a missing compile_commands json file") {
+TEST_CASE("loader reports a missing compile_commands json file",
+          "[compilation-database]") {
     const std::filesystem::path missing_path =
         test_root() / "missing-compile-commands.json";
 
@@ -88,7 +90,7 @@ TEST_CASE("loader reports a missing compile_commands json file") {
     REQUIRE(result.error().message.find("missing") != std::string::npos);
 }
 
-TEST_CASE("loader reports invalid json content") {
+TEST_CASE("loader reports invalid json content", "[compilation-database]") {
     const std::filesystem::path db_path =
         write_fixture("invalid-compile-commands.json",
                       R"json([
@@ -108,7 +110,8 @@ TEST_CASE("loader reports invalid json content") {
     REQUIRE(result.error().message.find("invalid") != std::string::npos);
 }
 
-TEST_CASE("loader extracts translation unit paths and compile arguments") {
+TEST_CASE("loader extracts translation unit paths and compile arguments",
+          "[compilation-database]") {
     const std::filesystem::path db_path =
         write_fixture("compile-commands-with-splitting.json",
                       R"json([

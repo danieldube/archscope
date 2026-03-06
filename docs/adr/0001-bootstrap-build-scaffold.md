@@ -1,6 +1,6 @@
 # ADR 0001: Bootstrap the project with a self-contained CMake test scaffold
 
-- Status: Accepted
+- Status: Superseded by ADR 0002
 
 ## Context
 

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 
 project(ArchScope VERSION 0.1.0 LANGUAGES CXX)
 
+include(FetchContent)
 include(cmake/CompilerWarnings.cmake)
 include(CTest)
 
@@ -11,6 +12,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ARCHSCOPE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
+
+if(BUILD_TESTING)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.7.1
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+    list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+    include(Catch)
+endif()
 
 add_library(archscope_core STATIC
     src/core/cli_text.cpp
@@ -33,29 +46,31 @@ target_link_libraries(archscope PRIVATE ArchScope::core)
 target_compile_features(archscope PRIVATE cxx_std_17)
 archscope_set_common_warnings(archscope)
 
-add_executable(archscope_tests
-    tests/support/catch_session.cpp
-    tests/unit/test_main.cpp
-    tests/unit/cli_text_tests.cpp
-    tests/unit/compilation_database_loader_tests.cpp
-    tests/unit/version_tests.cpp
-)
-target_include_directories(archscope_tests
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/tests/support
-)
-target_link_libraries(archscope_tests PRIVATE ArchScope::core)
-add_dependencies(archscope_tests archscope)
-target_compile_features(archscope_tests PRIVATE cxx_std_17)
-archscope_set_common_warnings(archscope_tests)
-
 if(BUILD_TESTING)
+    add_executable(archscope_tests
+        tests/unit/cli_text_tests.cpp
+        tests/unit/compilation_database_loader_tests.cpp
+        tests/unit/version_tests.cpp
+    )
+    target_include_directories(archscope_tests
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+    )
+    target_link_libraries(
+        archscope_tests
+        PRIVATE
+            ArchScope::core
+            Catch2::Catch2WithMain
+    )
+    add_dependencies(archscope_tests archscope)
+    target_compile_features(archscope_tests PRIVATE cxx_std_17)
+    archscope_set_common_warnings(archscope_tests)
+
     set(
         archscope_expected_file
         "${PROJECT_SOURCE_DIR}/tests/system/expected/version.txt"
     )
-    add_test(NAME archscope_unit_tests COMMAND archscope_tests)
+    catch_discover_tests(archscope_tests)
     add_test(
         NAME archscope_system_version
         COMMAND ${CMAKE_COMMAND}

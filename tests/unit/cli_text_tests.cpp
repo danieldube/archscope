@@ -4,7 +4,8 @@
 
 #include <string>
 
-TEST_CASE("help text documents the supported bootstrap options") {
+TEST_CASE("help text documents the supported bootstrap options",
+          "[cli][help]") {
     const std::string help = archscope::core::help_text();
 
     REQUIRE(help.find("Usage: archscope [--help] [--version]") !=

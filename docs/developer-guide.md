@@ -8,6 +8,8 @@
 - `pre-commit`
 - `clang-format`
 - `clang-tidy`
+- Network access for the first test-enabled configure, unless Catch2 is
+  provided through a pre-populated CMake download cache or internal mirror
 
 ## Local workflows
 
@@ -24,8 +26,7 @@ pre-commit run --all-files
 
 - `tests/unit/` holds fast tests for library code.
 - `tests/system/` holds CTest-driven executable checks.
-- The current test harness includes a minimal local `catch2`-compatible shim
-  because external package download is intentionally avoided during bootstrap.
+- Unit tests use Catch2 v3 fetched with CMake `FetchContent` during configure.
 - The next analysis pipeline pieces should extend the existing
   `compilation_database_loader_tests.cpp` contract before wiring new CLI or
   Clang-tooling behavior on top.
@@ -34,6 +35,8 @@ pre-commit run --all-files
 
 - `src/core/compilation_database.*` provides the current plain-C++ loader for
   `compile_commands.json`.
+- `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
+  registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
   `directory` + `file` + either `arguments` or `command`.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so

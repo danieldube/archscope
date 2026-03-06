@@ -4,7 +4,8 @@ ArchScope is a C++17 command-line tool for computing architecture metrics over
 projects that provide a `compile_commands.json` database. The current codebase
 includes the bootstrap CLI plus the first compilation-database loading
 contract, covered by unit tests for valid input, missing files, invalid JSON,
-and compile-argument extraction.
+and compile-argument extraction. Unit tests now use Catch2 v3 fetched by CMake
+at configure time.
 
 ## Quick start
 
