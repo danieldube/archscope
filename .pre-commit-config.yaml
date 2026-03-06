@@ -10,4 +10,4 @@ repos:
         name: clang-format
         entry: clang-format -i
         language: system
-        files: '\\.(cpp|hpp|cc|cxx|h)$'
+        files: '\.(cpp|hpp|cc|cxx|h)$'
