@@ -91,8 +91,8 @@ D. Output format
   - The acceptance criteria you used.
 - Then provide:
   - The key design decisions for the step.
-  - The tests added or updated.
   - Any follow-up notes required to build, run, or validate the step.
+  - A brief and expressive commit message.
 
 Constraints and reminders:
 

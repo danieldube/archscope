@@ -19,3 +19,10 @@
    without embedding shell quotes inside the string. Literal quote characters
    become part of the argv value and can silently redirect outputs to the wrong
    path.
+7. Do not run build and test commands in parallel against the same build
+   directory when `ctest` depends on freshly built targets. Finish the build
+   first, then run tests, or `ctest` can pick up stale executables and report
+   misleading failures.
+8. When feeding arbitrary paths through `xargs sh -c`, avoid `printf` formats
+   that treat the path as an option. Use `printf --` or a simpler direct `sed`
+   loop so paths beginning with `-` do not break the inspection command.

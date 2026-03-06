@@ -14,6 +14,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(ARCHSCOPE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
 
 if(BUILD_TESTING)
+    set(archscope_local_catch2_dirs
+        "${PROJECT_BINARY_DIR}/_deps/catch2-src"
+        "${PROJECT_SOURCE_DIR}/cmake-build-debug/_deps/catch2-src"
+    )
+    foreach(archscope_catch2_dir IN LISTS archscope_local_catch2_dirs)
+        if(EXISTS "${archscope_catch2_dir}/CMakeLists.txt")
+            set(FETCHCONTENT_SOURCE_DIR_CATCH2 "${archscope_catch2_dir}")
+            break()
+        endif()
+    endforeach()
+
     FetchContent_Declare(
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -26,6 +37,7 @@ if(BUILD_TESTING)
 endif()
 
 add_library(archscope_core STATIC
+    src/core/analysis.cpp
     src/core/cli_text.cpp
     src/core/compilation_database.cpp
     src/core/report.cpp
@@ -49,6 +61,7 @@ archscope_set_common_warnings(archscope)
 
 if(BUILD_TESTING)
     add_executable(archscope_tests
+        tests/unit/analysis_result_tests.cpp
         tests/unit/cli_text_tests.cpp
         tests/unit/compilation_database_loader_tests.cpp
         tests/unit/report_writer_tests.cpp

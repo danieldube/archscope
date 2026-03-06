@@ -40,7 +40,7 @@
   - handling invalid JSON
   - extracting a list of TU paths and compile args
 
-### Task 1.2 — Implement compilation database loading
+### Task 1.2 — Implement compilation database loading [completed]
 - Implement `CompilationDatabaseLoader` that returns entries:
   - source path
   - compile args (split safely)
@@ -68,7 +68,7 @@ JSON.
 
 ## Increment 2 — Clang LibTooling pipeline + enumerate types per TU
 
-### Task 2.1 — Tests first: “types extracted” domain model
+### Task 2.1 — Tests first: “types extracted” domain model [completed]
 - Unit tests for `AnalysisResult` assembly from synthetic extracted data.
 
 ### Task 2.2 — Implement Clang tool runner (syntax-only)
