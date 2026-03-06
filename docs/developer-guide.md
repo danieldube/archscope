@@ -19,8 +19,11 @@
 ./scripts/test.sh
 pre-commit install
 pre-commit run --all-files
-./scripts/run-tidy.sh
 ```
+
+`pre-commit` runs both formatting checks and `clang-tidy`. The `clang-tidy`
+hook uses `build/compile_commands.json`, so run `./scripts/configure.sh` before
+invoking it.
 
 ## Test layout
 

@@ -8,59 +8,58 @@
 namespace archscope::core {
 
 struct ModuleId {
-    std::string value;
+  std::string value;
 
-    [[nodiscard]] bool operator==(const ModuleId &other) const {
-        return value == other.value;
-    }
-    [[nodiscard]] bool operator!=(const ModuleId &other) const {
-        return !(*this == other);
-    }
-    [[nodiscard]] bool operator<(const ModuleId &other) const {
-        return value < other.value;
-    }
+  [[nodiscard]] bool operator==(const ModuleId &other) const {
+    return value == other.value;
+  }
+  [[nodiscard]] bool operator!=(const ModuleId &other) const {
+    return !(*this == other);
+  }
+  [[nodiscard]] bool operator<(const ModuleId &other) const {
+    return value < other.value;
+  }
 };
 
 struct TypeId {
-    std::string value;
+  std::string value;
 
-    [[nodiscard]] bool operator==(const TypeId &other) const {
-        return value == other.value;
-    }
+  [[nodiscard]] bool operator==(const TypeId &other) const {
+    return value == other.value;
+  }
 };
 
 struct TypeInfo {
-    TypeId id;
-    ModuleId owner;
-    bool is_abstract = false;
-    bool is_concrete = false;
+  TypeId id;
+  ModuleId owner;
+  bool is_abstract = false;
+  bool is_concrete = false;
 
-    [[nodiscard]] bool operator==(const TypeInfo &other) const {
-        return id == other.id && owner == other.owner &&
-               is_abstract == other.is_abstract &&
-               is_concrete == other.is_concrete;
-    }
+  [[nodiscard]] bool operator==(const TypeInfo &other) const {
+    return id == other.id && owner == other.owner &&
+           is_abstract == other.is_abstract && is_concrete == other.is_concrete;
+  }
 };
 
 struct ModuleIdHash {
-    std::size_t operator()(const ModuleId &module) const noexcept {
-        return std::hash<std::string>{}(module.value);
-    }
+  std::size_t operator()(const ModuleId &module) const noexcept {
+    return std::hash<std::string>{}(module.value);
+  }
 };
 
 struct DependencyGraph {
-    std::unordered_map<ModuleId, std::unordered_set<ModuleId, ModuleIdHash>,
-                       ModuleIdHash>
-        outgoing;
+  std::unordered_map<ModuleId, std::unordered_set<ModuleId, ModuleIdHash>,
+                     ModuleIdHash>
+      outgoing;
 
-    void add_dependency(ModuleId from, ModuleId target);
-    [[nodiscard]] std::vector<ModuleId> modules() const;
+  void add_dependency(ModuleId from, ModuleId target);
+  [[nodiscard]] std::vector<ModuleId> modules() const;
 };
 
 struct AnalysisResult {
-    std::vector<ModuleId> modules;
-    std::vector<TypeInfo> types;
-    DependencyGraph graph;
+  std::vector<ModuleId> modules;
+  std::vector<TypeInfo> types;
+  DependencyGraph graph;
 };
 
 AnalysisResult assemble_analysis_result(std::vector<TypeInfo> types,

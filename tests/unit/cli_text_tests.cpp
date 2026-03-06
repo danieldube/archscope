@@ -6,13 +6,12 @@
 
 TEST_CASE("help text documents the supported bootstrap options",
           "[cli][help]") {
-    const std::string help = archscope::core::help_text();
+  const std::string help = archscope::core::help_text();
 
-    REQUIRE(
-        help.find("Usage: archscope <compile_commands.json> <metrics...>") !=
-        std::string::npos);
-    REQUIRE(help.find("--help") != std::string::npos);
-    REQUIRE(help.find("--version") != std::string::npos);
-    REQUIRE(help.find("--module=<kind>") != std::string::npos);
-    REQUIRE(help.find("abstractness") != std::string::npos);
+  REQUIRE(help.find("Usage: archscope <compile_commands.json> <metrics...>") !=
+          std::string::npos);
+  REQUIRE(help.find("--help") != std::string::npos);
+  REQUIRE(help.find("--version") != std::string::npos);
+  REQUIRE(help.find("--module=<kind>") != std::string::npos);
+  REQUIRE(help.find("abstractness") != std::string::npos);
 }

@@ -14,13 +14,11 @@ jobs:
           python-version: '3.x'
       - name: Install pre-commit
         run: python -m pip install pre-commit
-      - name: Pre-commit
-        run: pre-commit run --all-files
       - name: Configure
         run: ./scripts/configure.sh
       - name: Build
         run: ./scripts/build.sh
+      - name: Pre-commit
+        run: pre-commit run --all-files
       - name: Test
         run: ./scripts/test.sh
-      - name: Tidy
-        run: ./scripts/run-tidy.sh
