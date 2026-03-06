@@ -1,12 +1,29 @@
 # User Manual
 
-## Bootstrap commands
+## Supported commands
 
 `archscope --help`
 : Print the currently supported command-line options.
 
 `archscope --version`
 : Print the bootstrap version string.
+
+`archscope <compile_commands.json> <metrics...> --module=translation_unit [--report=<path>] [--project-name=<name>]`
+: Load the compilation database, list translation units as modules, and write a
+  Markdown report with placeholder metric values for the requested metrics.
+
+Supported metric ids for this increment:
+
+- `abstractness`
+- `instability`
+- `distance_from_main_sequence`
+
+Example:
+
+```bash
+./build/archscope tests/fixtures/placeholder_project/compile_commands.json \
+  abstractness --module=translation_unit --report=architecture-metrics.md
+```
 
 ## Build and test
 
@@ -15,8 +32,3 @@
 ./scripts/build.sh
 ./scripts/test.sh
 ```
-
-Later increments will extend this manual with compile database analysis, module
-selection, and Markdown report generation. The current codebase already
-includes internal support for reading `compile_commands.json`, but that
-capability is not exposed on the CLI until the next roadmap tasks.

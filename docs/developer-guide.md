@@ -27,23 +27,27 @@ pre-commit run --all-files
 - `tests/unit/` holds fast tests for library code.
 - `tests/system/` holds CTest-driven executable checks.
 - Unit tests use Catch2 v3 fetched with CMake `FetchContent` during configure.
-- The next analysis pipeline pieces should extend the existing
-  `compilation_database_loader_tests.cpp` contract before wiring new CLI or
-  Clang-tooling behavior on top.
+- `tests/fixtures/placeholder_project/` provides the Increment 1 translation
+  unit fixture for placeholder report generation.
 
 ## Current implementation notes
 
 - `src/core/compilation_database.*` provides the current plain-C++ loader for
   `compile_commands.json`.
+- `src/core/report.*` owns the current report model and deterministic Markdown
+  rendering.
 - `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
   registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
   `directory` + `file` + either `arguments` or `command`.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
+- The CLI currently supports placeholder output for
+  `--module=translation_unit`; it validates metric ids and writes `0.000`
+  values in request order.
 
 ## Next implementation steps
 
-The next increments will build on the current loader by integrating Clang
-LibTooling, extracting types per translation unit, and adding Markdown report
-generation while preserving the current target layout.
+The next increments will replace the placeholder metric values with Clang
+LibTooling-backed extraction, starting with enumerating types per translation
+unit while preserving the current target layout.

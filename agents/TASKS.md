@@ -49,7 +49,7 @@
 Prefer Clang tooling `CompilationDatabase` APIs where possible; otherwise parse
 JSON.
 
-### Task 1.3 — Markdown report writer
+### Task 1.3 — Markdown report writer [completed]
 - Unit tests for deterministic formatting and ordering.
 - Implement minimal report writer producing the required header + module
   blocks.

@@ -1,0 +1,20 @@
+[
+  {
+    "directory": "/workspace/placeholder_project",
+    "file": "src/zeta.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/zeta.cpp"
+    ]
+  },
+  {
+    "directory": "/workspace/placeholder_project",
+    "file": "src/alpha.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/alpha.cpp"
+    ]
+  }
+]

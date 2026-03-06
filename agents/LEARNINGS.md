@@ -15,3 +15,7 @@
 5. Do not run `clang-format` on `CMakeLists.txt` or `.cmake` files. Use a
    CMake-aware formatter, or leave them untouched unless edited manually,
    because the C/C++ formatter can corrupt CMake syntax.
+6. In CMake `execute_process()`, pass `--flag=${value}` as a single argument
+   without embedding shell quotes inside the string. Literal quote characters
+   become part of the argv value and can silently redirect outputs to the wrong
+   path.

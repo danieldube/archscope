@@ -28,6 +28,7 @@ endif()
 add_library(archscope_core STATIC
     src/core/cli_text.cpp
     src/core/compilation_database.cpp
+    src/core/report.cpp
     src/core/version.cpp
 )
 add_library(ArchScope::core ALIAS archscope_core)
@@ -50,6 +51,7 @@ if(BUILD_TESTING)
     add_executable(archscope_tests
         tests/unit/cli_text_tests.cpp
         tests/unit/compilation_database_loader_tests.cpp
+        tests/unit/report_writer_tests.cpp
         tests/unit/version_tests.cpp
     )
     target_include_directories(archscope_tests
@@ -70,6 +72,18 @@ if(BUILD_TESTING)
         archscope_expected_file
         "${PROJECT_SOURCE_DIR}/tests/system/expected/version.txt"
     )
+    set(
+        archscope_placeholder_fixture
+        "${PROJECT_SOURCE_DIR}/tests/fixtures/placeholder_project/compile_commands.json"
+    )
+    set(
+        archscope_placeholder_expected
+        "${PROJECT_SOURCE_DIR}/tests/system/expected/placeholder-report.md"
+    )
+    set(
+        archscope_placeholder_report
+        "${PROJECT_BINARY_DIR}/tests/system/placeholder-report.md"
+    )
     catch_discover_tests(archscope_tests)
     add_test(
         NAME archscope_system_version
@@ -77,5 +91,14 @@ if(BUILD_TESTING)
             -DARCHSCOPE_BIN=$<TARGET_FILE:archscope>
             -DEXPECTED_FILE=${archscope_expected_file}
             -P ${PROJECT_SOURCE_DIR}/tests/system/check_version.cmake
+    )
+    add_test(
+        NAME archscope_system_placeholder_report
+        COMMAND ${CMAKE_COMMAND}
+            -DARCHSCOPE_BIN=$<TARGET_FILE:archscope>
+            -DFIXTURE_DB=${archscope_placeholder_fixture}
+            -DEXPECTED_FILE=${archscope_placeholder_expected}
+            -DREPORT_OUTPUT=${archscope_placeholder_report}
+            -P ${PROJECT_SOURCE_DIR}/tests/system/check_placeholder_report.cmake
     )
 endif()

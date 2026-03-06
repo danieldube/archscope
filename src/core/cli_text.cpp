@@ -5,14 +5,21 @@
 namespace archscope::core {
 
 std::string help_text() {
-    return "Usage: archscope [--help] [--version]\n"
+    return "Usage: archscope <compile_commands.json> <metrics...> "
+           "--module=<kind> [--report=<path>] [--project-name=<name>]\n"
+           "       archscope [--help] [--version]\n"
            "\n"
-           "ArchScope bootstrap CLI. Full analysis commands arrive in later "
-           "increments.\n"
+           "Supported metric ids: abstractness, instability, "
+           "distance_from_main_sequence\n"
            "\n"
            "Options:\n"
-           "  --help       Show this help message and exit.\n"
-           "  --version    Show the executable version and exit.\n";
+           "  --module=<kind>         Module kind (currently: "
+           "translation_unit).\n"
+           "  --report=<path>         Output Markdown report path.\n"
+           "  --project-name=<name>   Override the project name shown in the "
+           "report.\n"
+           "  --help                  Show this help message and exit.\n"
+           "  --version               Show the executable version and exit.\n";
 }
 
 } // namespace archscope::core
