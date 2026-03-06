@@ -33,7 +33,7 @@
 
 ## Increment 1 — Compile database loading + basic report generation
 
-### Task 1.1 — Tests first: compile_commands.json reader
+### Task 1.1 — Tests first: compile_commands.json reader [completed]
 - Unit tests for:
   - reading valid JSON file
   - handling missing file

@@ -52,4 +52,6 @@ int run_all_tests();
                 #expression, __FILE__, __LINE__); \
         } \
     } while (false)
+
+#define REQUIRE_FALSE(expression) REQUIRE(!(expression))
 // clang-format on

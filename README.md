@@ -1,9 +1,10 @@
 # ArchScope
 
 ArchScope is a C++17 command-line tool for computing architecture metrics over
-projects that provide a `compile_commands.json` database. This increment
-bootstraps the repository with a runnable `archscope` executable, unit tests,
-system tests, and CI-quality guardrails.
+projects that provide a `compile_commands.json` database. The current codebase
+includes the bootstrap CLI plus the first compilation-database loading
+contract, covered by unit tests for valid input, missing files, invalid JSON,
+and compile-argument extraction.
 
 ## Quick start
 
@@ -18,9 +19,10 @@ pre-commit run --all-files
 
 ## Current status
 
-The bootstrap CLI only supports `--help` and `--version`. Compilation-database
-loading, analysis, and Markdown report generation arrive in later roadmap
-increments.
+The CLI still only supports `--help` and `--version`, but `archscope_core` now
+contains a tested `compile_commands.json` loader that the later analysis
+pipeline will build on. Markdown report generation and metric analysis remain
+for later roadmap increments.
 
 ## Repository layout
 

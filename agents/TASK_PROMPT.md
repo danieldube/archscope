@@ -4,6 +4,7 @@ Context:
 
 - The project specification, architecture, roles, and constraints are described
   in `agents/SPEC.md`.
+- Rules for your workflow are described in `agents/AGENTS.md`.
 - The step-by-step implementation plan is described in `agents/TASKS.md`.
 - The project must be developed test-driven (tests first, then implementation).
 - The project is a C++17 CLI application named `ArchScope` with the executable
@@ -32,6 +33,7 @@ A. Analyze and clarify
   need to be created or modified.
 - Identify any assumptions required to complete the step and keep them minimal
   and explicit.
+- Verify your planned approach against `agents/LEARNINGS.md`.
 
 B. Test-driven implementation
 

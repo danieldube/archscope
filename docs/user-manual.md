@@ -17,4 +17,6 @@
 ```
 
 Later increments will extend this manual with compile database analysis, module
-selection, and Markdown report generation.
+selection, and Markdown report generation. The current codebase already
+includes internal support for reading `compile_commands.json`, but that
+capability is not exposed on the CLI until the next roadmap tasks.

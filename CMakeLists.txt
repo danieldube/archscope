@@ -14,6 +14,7 @@ option(ARCHSCOPE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
 
 add_library(archscope_core STATIC
     src/core/cli_text.cpp
+    src/core/compilation_database.cpp
     src/core/version.cpp
 )
 add_library(ArchScope::core ALIAS archscope_core)
@@ -36,6 +37,7 @@ add_executable(archscope_tests
     tests/support/catch_session.cpp
     tests/unit/test_main.cpp
     tests/unit/cli_text_tests.cpp
+    tests/unit/compilation_database_loader_tests.cpp
     tests/unit/version_tests.cpp
 )
 target_include_directories(archscope_tests

@@ -9,3 +9,9 @@
 3. Keep the initial `clang-tidy` baseline practical for the current increment.
    Enabling style-heavy checks too early creates noisy, low-value churn that
    distracts from shipping the requested behavior.
+4. Probe preferred shell tools explicitly before using them in the first
+   command. This session assumed `rg` was present; use `command -v rg >/dev/null`
+   and fall back immediately to `find` or `grep` when it is not.
+5. Do not run `clang-format` on `CMakeLists.txt` or `.cmake` files. Use a
+   CMake-aware formatter, or leave them untouched unless edited manually,
+   because the C/C++ formatter can corrupt CMake syntax.
