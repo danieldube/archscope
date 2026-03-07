@@ -1,7 +1,9 @@
 #include "core/cli_text.hpp"
 #include "core/compilation_database.hpp"
+#include "core/metrics.hpp"
 #include "core/report.hpp"
 #include "core/version.hpp"
+#include "clang/tool_runner.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -132,6 +134,22 @@ std::string derive_project_name(const CliOptions &options) {
   return name;
 }
 
+archscope::core::AnalysisResult build_translation_unit_analysis_result(
+    const std::vector<archscope::clang_backend::ExtractedType> &types) {
+  std::vector<archscope::core::TypeInfo> analysis_types;
+  analysis_types.reserve(types.size());
+
+  for (const auto &type : types) {
+    analysis_types.push_back(
+        {archscope::core::TypeId{type.qualified_name},
+         archscope::core::ModuleId{type.translation_unit_path},
+         type.is_abstract, !type.is_abstract});
+  }
+
+  return archscope::core::assemble_analysis_result(std::move(analysis_types),
+                                                   {});
+}
+
 int run_cli(const std::vector<std::string> &args) {
   std::string error_message;
   const auto parsed = parse_cli(args, error_message);
@@ -153,6 +171,21 @@ int run_cli(const std::vector<std::string> &args) {
     return 3;
   }
 
+  const auto extracted_types =
+      archscope::clang_backend::extract_types(database.value());
+  if (!extracted_types.has_value()) {
+    std::cerr << "error: " << extracted_types.error().message;
+    if (!extracted_types.error().failed_translation_units.empty()) {
+      std::cerr << ": "
+                << extracted_types.error().failed_translation_units.front();
+    }
+    std::cerr << '\n';
+    return 4;
+  }
+
+  const auto analysis_result =
+      build_translation_unit_analysis_result(extracted_types.value());
+
   archscope::core::ReportModel report{
       derive_project_name(*parsed),
       {},
@@ -161,7 +194,12 @@ int run_cli(const std::vector<std::string> &args) {
   for (const std::string &path : database.value().translation_unit_paths()) {
     archscope::core::ReportModule module{path, {}};
     for (const auto metric : parsed->metrics) {
-      module.metrics.push_back({metric, 0.0});
+      double value = 0.0;
+      if (metric == archscope::core::MetricId::abstractness) {
+        value = archscope::core::compute_abstractness(
+            analysis_result, archscope::core::ModuleId{path});
+      }
+      module.metrics.push_back({metric, value});
     }
     report.modules.push_back(module);
   }

@@ -14,9 +14,42 @@ if(NOT DEFINED REPORT_OUTPUT)
   message(FATAL_ERROR "REPORT_OUTPUT is required")
 endif()
 
+get_filename_component(FIXTURE_DIR "${FIXTURE_DB}" DIRECTORY)
+set(RUNTIME_COMPILE_DB "${REPORT_OUTPUT}.compile_commands.json")
+
+string(
+  CONCAT RUNTIME_COMPILE_DB_CONTENT
+         "[\n"
+         "  {\n"
+         "    \"directory\": \""
+         "${FIXTURE_DIR}"
+         "\",\n"
+         "    \"file\": \"src/zeta.cpp\",\n"
+         "    \"arguments\": [\n"
+         "      \"clang++\",\n"
+         "      \"-std=c++17\",\n"
+         "      \"src/zeta.cpp\"\n"
+         "    ]\n"
+         "  },\n"
+         "  {\n"
+         "    \"directory\": \""
+         "${FIXTURE_DIR}"
+         "\",\n"
+         "    \"file\": \"src/alpha.cpp\",\n"
+         "    \"arguments\": [\n"
+         "      \"clang++\",\n"
+         "      \"-std=c++17\",\n"
+         "      \"src/alpha.cpp\"\n"
+         "    ]\n"
+         "  }\n"
+         "]\n")
+file(WRITE "${RUNTIME_COMPILE_DB}" "${RUNTIME_COMPILE_DB_CONTENT}")
+
 execute_process(
-  COMMAND "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" abstractness
-          --module=translation_unit "--report=${REPORT_OUTPUT}"
+  COMMAND
+    "${ARCHSCOPE_BIN}" "${RUNTIME_COMPILE_DB}" abstractness
+    --module=translation_unit --project-name=placeholder_project
+    "--report=${REPORT_OUTPUT}"
   RESULT_VARIABLE archscope_result
   OUTPUT_VARIABLE archscope_output
   ERROR_VARIABLE archscope_error

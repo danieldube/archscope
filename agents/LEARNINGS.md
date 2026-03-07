@@ -30,3 +30,7 @@
    directory or fetch missing hook repositories. Set `PRE_COMMIT_HOME` to a
    writable location first, and if the environment is offline, fall back to
    direct local tools like `clang-format`, `clang-tidy`, and `ctest`.
+10. Do not run overlapping verification commands that execute the same tests in
+    parallel when those tests use filesystem fixtures or temp directories.
+    Either verify serially, or make the tests use unique per-run paths so
+    concurrent runs cannot race and produce false failures.

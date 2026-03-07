@@ -174,7 +174,7 @@ public:
     }
 
     types_.push_back({translation_unit_path_, normalize_path(file_name.str()),
-                      qualified_name});
+                      qualified_name, record->isAbstract()});
     return true;
   }
 
@@ -255,10 +255,11 @@ extract_types(const core::CompilationDatabase &database) {
   std::vector<ExtractedType> types;
 
   for (const auto &entry : database.entries) {
-    const std::string translation_unit_path =
+    const std::string translation_unit_path = entry.source_path;
+    const std::string resolved_translation_unit_path =
         resolve_path(entry, entry.source_path);
     clang::tooling::ClangTool tool(compilation_database,
-                                   {translation_unit_path});
+                                   {resolved_translation_unit_path});
     CountingDiagConsumer diagnostics;
     tool.setDiagnosticConsumer(&diagnostics);
     tool.appendArgumentsAdjuster(clang::tooling::getClangSyntaxOnlyAdjuster());

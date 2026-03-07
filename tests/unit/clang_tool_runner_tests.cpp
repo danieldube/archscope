@@ -3,6 +3,7 @@
 #include "core/compilation_database.hpp"
 #include "clang/tool_runner.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -14,7 +15,11 @@ class TemporaryProject {
 public:
   explicit TemporaryProject(std::string directory_name)
       : root_(std::filesystem::temp_directory_path() /
-              std::filesystem::path(std::move(directory_name))) {
+              std::filesystem::path(
+                  std::move(directory_name) + "-" +
+                  std::to_string(std::chrono::steady_clock::now()
+                                     .time_since_epoch()
+                                     .count()))) {
     std::error_code cleanup_error;
     std::filesystem::remove_all(root_, cleanup_error);
     std::filesystem::create_directories(root_ / "src");
@@ -58,6 +63,14 @@ std::vector<archscope::clang_backend::ExtractedType>
 extract_types(const TemporaryProject &project) {
   const auto extracted =
       archscope::clang_backend::extract_types(load_database(project));
+  const std::string diagnostic =
+      extracted.has_value()
+          ? std::string{}
+          : extracted.error().message + " :: " +
+                (extracted.error().failed_translation_units.empty()
+                     ? std::string{"<none>"}
+                     : extracted.error().failed_translation_units.front());
+  INFO(diagnostic);
   REQUIRE(extracted.has_value());
   return extracted.value();
 }
@@ -81,6 +94,11 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                                       "#include \"../include/common.hpp\"\n"
                                       "namespace sample {\n"
                                       "struct Forward;\n"
+                                      "class Interface {\n"
+                                      "public:\n"
+                                      "  virtual ~Interface() = default;\n"
+                                      "  virtual void run() = 0;\n"
+                                      "};\n"
                                       "class Alpha final {\n"
                                       "  Shared member;\n"
                                       "};\n"
@@ -111,19 +129,28 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
 
   REQUIRE(types == std::vector<archscope::clang_backend::ExtractedType>{
                        {
-                           (project.root() / "src/alpha.cpp").string(),
+                           "src/alpha.cpp",
                            (project.root() / "include/common.hpp").string(),
                            "sample::Shared",
+                           false,
                        },
                        {
-                           (project.root() / "src/alpha.cpp").string(),
+                           "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
                            "sample::Alpha",
+                           false,
                        },
                        {
-                           (project.root() / "src/zeta.cpp").string(),
+                           "src/alpha.cpp",
+                           (project.root() / "src/alpha.cpp").string(),
+                           "sample::Interface",
+                           true,
+                       },
+                       {
+                           "src/zeta.cpp",
                            (project.root() / "src/zeta.cpp").string(),
                            "sample::detail::Zeta",
+                           false,
                        },
                    });
 }
@@ -150,9 +177,8 @@ TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
       archscope::clang_backend::extract_types(load_database(project));
 
   REQUIRE_FALSE(extracted.has_value());
-  REQUIRE(
-      extracted.error().failed_translation_units ==
-      std::vector<std::string>{(project.root() / "src/broken.cpp").string()});
+  REQUIRE(extracted.error().failed_translation_units ==
+          std::vector<std::string>{"src/broken.cpp"});
   REQUIRE(extracted.error().message.find("failed to parse translation unit") !=
           std::string::npos);
 }

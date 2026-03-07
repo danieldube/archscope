@@ -13,11 +13,13 @@ struct ExtractedType {
   std::string translation_unit_path;
   std::string definition_path;
   std::string qualified_name;
+  bool is_abstract = false;
 
   [[nodiscard]] bool operator==(const ExtractedType &other) const {
     return translation_unit_path == other.translation_unit_path &&
            definition_path == other.definition_path &&
-           qualified_name == other.qualified_name;
+           qualified_name == other.qualified_name &&
+           is_abstract == other.is_abstract;
   }
 };
 

@@ -53,16 +53,16 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   additional metrics on top of it.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
-  type records.
+  type records, including whether each definition is abstract.
 - `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
   registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
   `directory` + `file` + either `arguments` or `command`.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
-- The CLI still supports placeholder output for `--module=translation_unit`;
-  the abstractness formula exists in `archscope_core`, but it is not wired into
-  CLI report generation until the later Task 3.x steps.
+- The CLI computes translation-unit `abstractness` from extracted types.
+  `instability` and `distance_from_main_sequence` remain placeholder values
+  until later roadmap tasks wire those metrics in.
 - The Clang extraction layer currently collects class/struct definitions,
   definition file paths, and qualified names while excluding forward
   declarations and system-header types.
