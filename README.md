@@ -8,6 +8,19 @@ Markdown report flow for translation-unit modules.
 
 ## Quick start
 
+Install the required system packages first. On Ubuntu 24.04:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
+  clang-format \
+  clang-tidy \
+  libclang-18-dev \
+  libcurl4-openssl-dev \
+  llvm-18-dev \
+  ninja-build
+```
+
 ```bash
 ./scripts/configure.sh
 ./scripts/build.sh

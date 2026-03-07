@@ -6,11 +6,25 @@
 - A C++17 compiler
 - Ninja
 - LLVM/Clang development packages with LibTooling support
+- `libcurl` development headers and libraries
 - `pre-commit`
 - `clang-format`
 - `clang-tidy`
 - Network access for the first test-enabled configure, unless Catch2 is
   provided through a pre-populated CMake download cache or internal mirror
+
+On Ubuntu 24.04, the CI-tested package set is:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
+  clang-format \
+  clang-tidy \
+  libclang-18-dev \
+  libcurl4-openssl-dev \
+  llvm-18-dev \
+  ninja-build
+```
 
 ## Local workflows
 

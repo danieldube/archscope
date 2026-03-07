@@ -34,3 +34,8 @@
     parallel when those tests use filesystem fixtures or temp directories.
     Either verify serially, or make the tests use unique per-run paths so
     concurrent runs cannot race and produce false failures.
+11. Keep CI system packages explicit when CMake depends on distro-provided
+    LLVM/Clang configs. `find_package(Clang CONFIG)` can locate
+    `/usr/lib/llvm-18/lib/cmake/clang/ClangTargets.cmake` from a partial image,
+    but the configure still fails unless `libclang-18-dev`, `llvm-18-dev`, and
+    related native dependencies such as `libcurl4-openssl-dev` are installed.
