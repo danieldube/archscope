@@ -71,7 +71,7 @@ JSON.
 ### Task 2.1 — Tests first: “types extracted” domain model [completed]
 - Unit tests for `AnalysisResult` assembly from synthetic extracted data.
 
-### Task 2.2 — Implement Clang tool runner (syntax-only)
+### Task 2.2 — Implement Clang tool runner (syntax-only) [completed]
 - Integrate `clang::tooling::ClangTool` and a minimal `FrontendAction` that
   parses TU.
 - Collect:

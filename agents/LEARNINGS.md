@@ -26,3 +26,7 @@
 8. When feeding arbitrary paths through `xargs sh -c`, avoid `printf` formats
    that treat the path as an option. Use `printf --` or a simpler direct `sed`
    loop so paths beginning with `-` do not break the inspection command.
+9. In sandboxed runs, do not assume `pre-commit` can use the default cache
+   directory or fetch missing hook repositories. Set `PRE_COMMIT_HOME` to a
+   writable location first, and if the environment is offline, fall back to
+   direct local tools like `clang-format`, `clang-tidy`, and `ctest`.

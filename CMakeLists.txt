@@ -14,7 +14,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(ARCHSCOPE_LLVM_VERSION
+    "18"
+    CACHE STRING "Preferred LLVM/Clang major version for LibTooling")
+
 option(ARCHSCOPE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
+
+set(ARCHSCOPE_LLVM_HINT
+    "/usr/lib/llvm-${ARCHSCOPE_LLVM_VERSION}/lib/cmake/clang")
+set(ARCHSCOPE_LLVM_CONFIG_HINT
+    "/usr/lib/llvm-${ARCHSCOPE_LLVM_VERSION}/lib/cmake/llvm")
+find_package(LLVM CONFIG REQUIRED HINTS "${ARCHSCOPE_LLVM_CONFIG_HINT}")
+find_package(Clang CONFIG REQUIRED HINTS "${ARCHSCOPE_LLVM_HINT}")
 
 if(BUILD_TESTING)
   set(ARCHSCOPE_LOCAL_CATCH2_DIRS
@@ -43,24 +54,38 @@ add_library(
   src/core/report.cpp src/core/version.cpp)
 add_library(ArchScope::core ALIAS archscope_core)
 
+add_library(archscope_clang STATIC src/clang/tool_runner.cpp)
+add_library(ArchScope::clang ALIAS archscope_clang)
+
 target_include_directories(archscope_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_compile_features(archscope_core PUBLIC cxx_std_17)
 archscope_set_common_warnings(archscope_core)
 
+target_include_directories(archscope_clang PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(archscope_clang SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS}
+                                                          ${CLANG_INCLUDE_DIRS})
+target_link_libraries(archscope_clang PUBLIC ArchScope::core clangTooling)
+target_compile_features(archscope_clang PUBLIC cxx_std_17)
+archscope_set_common_warnings(archscope_clang)
+
 add_executable(archscope src/cli/main.cpp)
-target_link_libraries(archscope PRIVATE ArchScope::core)
+target_link_libraries(archscope PRIVATE ArchScope::core ArchScope::clang)
 target_compile_features(archscope PRIVATE cxx_std_17)
 archscope_set_common_warnings(archscope)
 
 if(BUILD_TESTING)
   add_executable(
     archscope_tests
-    tests/unit/analysis_result_tests.cpp tests/unit/cli_text_tests.cpp
+    tests/unit/analysis_result_tests.cpp
+    tests/unit/cli_text_tests.cpp
+    tests/unit/clang_tool_runner_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
-    tests/unit/report_writer_tests.cpp tests/unit/version_tests.cpp)
+    tests/unit/report_writer_tests.cpp
+    tests/unit/version_tests.cpp)
   target_include_directories(archscope_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
-  target_link_libraries(archscope_tests PRIVATE ArchScope::core
-                                                Catch2::Catch2WithMain)
+  target_link_libraries(
+    archscope_tests PRIVATE ArchScope::core ArchScope::clang
+                            Catch2::Catch2WithMain)
   add_dependencies(archscope_tests archscope)
   target_compile_features(archscope_tests PRIVATE cxx_std_17)
   archscope_set_common_warnings(archscope_tests)

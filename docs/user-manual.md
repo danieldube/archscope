@@ -25,6 +25,12 @@ Example:
   abstractness --module=translation_unit --report=architecture-metrics.md
 ```
 
+## Implementation note
+
+This increment keeps the user-visible report output unchanged, but the build now
+requires Clang LibTooling development packages because the internal analysis
+pipeline can parse translation units and enumerate class/struct definitions.
+
 ## Build and test
 
 ```bash

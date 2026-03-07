@@ -2,8 +2,9 @@
 
 ArchScope is a C++17 command-line tool for computing architecture metrics over
 projects that provide a `compile_commands.json` database. The current codebase
-includes the bootstrap CLI, a tested compilation-database loader, and the first
-placeholder Markdown report flow for translation-unit modules.
+includes the bootstrap CLI, a tested compilation-database loader, a Clang
+LibTooling extraction layer for C++ type discovery, and the placeholder
+Markdown report flow for translation-unit modules.
 
 ## Quick start
 
@@ -22,15 +23,18 @@ pre-commit run --all-files
 
 The CLI now accepts a compilation database path, one or more metric ids, and
 `--module=translation_unit`, then writes a deterministic Markdown report with
-placeholder `0.000` metric values. Real metric computation and Clang-based
-analysis remain for later roadmap increments.
+placeholder `0.000` metric values. Under the hood, `archscope_clang` can now
+parse translation units with Clang LibTooling and enumerate user-defined
+class/struct definitions with qualified names and definition paths. Metric
+computation and CLI integration for extracted types remain for later roadmap
+increments.
 
 ## Repository layout
 
 - `src/cli/`: executable entrypoint.
 - `src/core/`: reusable logic shared by the executable and tests, including
   compilation-database loading and Markdown report rendering.
-- `src/clang/`: reserved for Clang LibTooling integration.
+- `src/clang/`: Clang LibTooling integration that extracts plain C++ type data.
 - `src/report/`: reserved for report generation.
 - `tests/unit/`: fast unit coverage.
 - `tests/system/`: CTest-driven system coverage.

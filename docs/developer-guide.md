@@ -5,6 +5,7 @@
 - CMake 3.26+
 - A C++17 compiler
 - Ninja
+- LLVM/Clang development packages with LibTooling support
 - `pre-commit`
 - `clang-format`
 - `clang-tidy`
@@ -25,6 +26,14 @@ pre-commit run --all-files
 hook uses `build/compile_commands.json`, so run `./scripts/configure.sh` before
 invoking it.
 
+If CMake cannot find Clang tooling automatically, point it at the desired LLVM
+install by setting `ARCHSCOPE_LLVM_VERSION`, for example:
+
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+  -DARCHSCOPE_LLVM_VERSION=18
+```
+
 ## Test layout
 
 - `tests/unit/` holds fast tests for library code.
@@ -39,18 +48,22 @@ invoking it.
   `compile_commands.json`.
 - `src/core/report.*` owns the current report model and deterministic Markdown
   rendering.
+- `src/clang/tool_runner.*` adapts the loaded compilation database into
+  `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
+  type records.
 - `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
   registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
   `directory` + `file` + either `arguments` or `command`.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
-- The CLI currently supports placeholder output for
-  `--module=translation_unit`; it validates metric ids and writes `0.000`
-  values in request order.
+- The CLI still supports placeholder output for `--module=translation_unit`;
+  it validates metric ids and writes `0.000` values in request order.
+- The Clang extraction layer currently collects class/struct definitions,
+  definition file paths, and qualified names while excluding forward
+  declarations and system-header types.
 
 ## Next implementation steps
 
-The next increments will replace the placeholder metric values with Clang
-LibTooling-backed extraction, starting with enumerating types per translation
-unit while preserving the current target layout.
+The next increment wires the extracted types into translation-unit module
+ownership and then replaces placeholder metric values incrementally.
