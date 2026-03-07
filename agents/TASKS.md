@@ -96,7 +96,7 @@ No metric computation yet; just extraction.
 
 ## Increment 3 — Abstractness (A) for translation_unit modules
 
-### Task 3.1 — Tests first: abstractness metric
+### Task 3.1 — Tests first: abstractness metric [completed]
 - Unit tests:
   - empty module -> A=0
   - 1 abstract, 1 concrete -> A=0.5

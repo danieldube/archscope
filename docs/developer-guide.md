@@ -48,6 +48,9 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   `compile_commands.json`.
 - `src/core/report.*` owns the current report model and deterministic Markdown
   rendering.
+- `src/core/metrics.*` now provides the pure abstractness computation used by
+  unit tests; later increments will add classification, registry wiring, and
+  additional metrics on top of it.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
   type records.
@@ -58,7 +61,8 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
 - The CLI still supports placeholder output for `--module=translation_unit`;
-  it validates metric ids and writes `0.000` values in request order.
+  the abstractness formula exists in `archscope_core`, but it is not wired into
+  CLI report generation until the later Task 3.x steps.
 - The Clang extraction layer currently collects class/struct definitions,
   definition file paths, and qualified names while excluding forward
   declarations and system-header types.

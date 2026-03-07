@@ -25,9 +25,10 @@ The CLI now accepts a compilation database path, one or more metric ids, and
 `--module=translation_unit`, then writes a deterministic Markdown report with
 placeholder `0.000` metric values. Under the hood, `archscope_clang` can now
 parse translation units with Clang LibTooling and enumerate user-defined
-class/struct definitions with qualified names and definition paths. Metric
-computation and CLI integration for extracted types remain for later roadmap
-increments.
+class/struct definitions with qualified names and definition paths, and
+`archscope_core` now includes tested abstractness formula computation over the
+plain analysis model. CLI integration for extracted types remains for later
+roadmap increments.
 
 ## Repository layout
 

@@ -51,7 +51,7 @@ endif()
 add_library(
   archscope_core STATIC
   src/core/analysis.cpp src/core/cli_text.cpp src/core/compilation_database.cpp
-  src/core/report.cpp src/core/version.cpp)
+  src/core/metrics.cpp src/core/report.cpp src/core/version.cpp)
 add_library(ArchScope::core ALIAS archscope_core)
 
 add_library(archscope_clang STATIC src/clang/tool_runner.cpp)
@@ -76,6 +76,7 @@ archscope_set_common_warnings(archscope)
 if(BUILD_TESTING)
   add_executable(
     archscope_tests
+    tests/unit/abstractness_metric_tests.cpp
     tests/unit/analysis_result_tests.cpp
     tests/unit/cli_text_tests.cpp
     tests/unit/clang_tool_runner_tests.cpp
