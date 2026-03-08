@@ -81,6 +81,7 @@ if(BUILD_TESTING)
     tests/unit/cli_text_tests.cpp
     tests/unit/clang_tool_runner_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
+    tests/unit/metric_registry_tests.cpp
     tests/unit/report_writer_tests.cpp
     tests/unit/version_tests.cpp)
   target_include_directories(archscope_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)

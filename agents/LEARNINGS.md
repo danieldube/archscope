@@ -39,3 +39,4 @@
     `/usr/lib/llvm-18/lib/cmake/clang/ClangTargets.cmake` from a partial image,
     but the configure still fails unless `libclang-18-dev`, `llvm-18-dev`, and
     related native dependencies such as `libcurl4-openssl-dev` are installed.
+12. Use the dedicated `apply_patch` tool for patch edits instead of invoking `apply_patch` through shell commands. Tool misuse triggers avoidable warnings and can break automation expectations.

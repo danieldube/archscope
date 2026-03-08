@@ -10,7 +10,8 @@
 
 `archscope <compile_commands.json> <metrics...> --module=translation_unit [--report=<path>] [--project-name=<name>]`
 : Load the compilation database, list translation units as modules, and write a
-  Markdown report with placeholder metric values for the requested metrics.
+  Markdown report with computed metric values in the exact order requested on
+  the command line.
 
 Supported metric ids for this increment:
 
@@ -22,7 +23,8 @@ Example:
 
 ```bash
 ./build/archscope tests/fixtures/placeholder_project/compile_commands.json \
-  abstractness --module=translation_unit --report=architecture-metrics.md
+  instability abstractness --module=translation_unit \
+  --report=architecture-metrics.md
 ```
 
 ## Implementation note

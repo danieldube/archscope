@@ -107,7 +107,7 @@ No metric computation yet; just extraction.
 - Use `CXXRecordDecl::isAbstract()` for definitions.
 - Exclude forward decls and system headers.
 
-### Task 3.3 — Wire metric registry + CLI selection
+### Task 3.3 — Wire metric registry + CLI selection [completed]
 - Implement `MetricRegistry`.
 - Ensure requested metrics determine output order.
 
