@@ -151,6 +151,9 @@ public:
     if (!record->isThisDeclarationADefinition()) {
       return true;
     }
+    if (record->isUnion()) {
+      return true;
+    }
     if (llvm::isa<clang::ClassTemplateSpecializationDecl>(record)) {
       return true;
     }

@@ -3,6 +3,7 @@
 #include "core/compilation_database.hpp"
 #include "clang/tool_runner.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -93,6 +94,9 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
   project.write_file("src/alpha.cpp", "#include <string>\n"
                                       "#include \"../include/common.hpp\"\n"
                                       "namespace sample {\n"
+                                      "union HiddenUnion {\n"
+                                      "  int value;\n"
+                                      "};\n"
                                       "struct Forward;\n"
                                       "class Interface {\n"
                                       "public:\n"
@@ -153,6 +157,10 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                            false,
                        },
                    });
+
+  REQUIRE(std::none_of(types.begin(), types.end(), [](const auto &type) {
+    return type.qualified_name == "sample::HiddenUnion";
+  }));
 }
 
 TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
