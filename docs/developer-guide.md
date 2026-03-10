@@ -86,5 +86,5 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
 
 ## Next implementation steps
 
-The next increment adds dedicated coverage for distance from the main sequence
-and keeps report formatting stable as all three metrics are emitted together.
+The next increment adds namespace-module ownership plus `--module-filter`
+prefix matching while keeping full-project analysis deterministic.

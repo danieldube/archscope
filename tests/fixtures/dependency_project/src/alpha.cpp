@@ -1,8 +1,14 @@
 #include "beta.cpp"
 
-struct Derived : Beta {};
+struct AlphaBase {
+  virtual ~AlphaBase() = default;
+  virtual void tick() = 0;
+};
 
-struct Alpha {
-  Beta member;
-  Beta make(Beta value);
+struct Alpha final : AlphaBase {
+  Beta *member = nullptr;
+
+  Beta *make(Beta *value) { return value; }
+
+  void tick() override {}
 };

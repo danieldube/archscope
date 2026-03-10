@@ -16,7 +16,8 @@ endif()
 
 execute_process(
   COMMAND
-    "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" instability --module=translation_unit
+    "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" abstractness instability
+    distance_from_main_sequence --module=translation_unit
     --project-name=dependency_fixture "--report=${REPORT_OUTPUT}"
   RESULT_VARIABLE archscope_result
   OUTPUT_VARIABLE archscope_output
@@ -25,7 +26,7 @@ execute_process(
 
 if(NOT archscope_result EQUAL 0)
   message(
-    FATAL_ERROR "archscope instability run failed with ${archscope_result}: "
+    FATAL_ERROR "archscope distance run failed with ${archscope_result}: "
                 "${archscope_error}")
 endif()
 
@@ -39,5 +40,5 @@ file(READ "${REPORT_OUTPUT}" actual_output)
 
 if(NOT actual_output STREQUAL expected_output)
   message(
-    FATAL_ERROR "Generated instability report did not match expected output.")
+    FATAL_ERROR "Generated distance report did not match expected output.")
 endif()

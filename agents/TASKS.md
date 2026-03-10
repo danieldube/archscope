@@ -150,12 +150,12 @@ Resolve referenced decl location → owner module.
 
 ## Increment 5 — Distance from Main Sequence (D)
 
-### Task 5.1 — Tests first: distance metric
+### Task 5.1 — Tests first: distance metric [completed]
 - Unit tests cover:
   - D=|A+I-1| with clamping
   - exact known cases
 
-### Task 5.2 — Implement distance metric and integrate
+### Task 5.2 — Implement distance metric and integrate [completed]
 - Ensure formatting stable.
 
 **Acceptance**

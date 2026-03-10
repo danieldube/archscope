@@ -83,6 +83,7 @@ if(BUILD_TESTING)
     tests/unit/clang_tool_runner_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
     tests/unit/dependency_graph_builder_tests.cpp
+    tests/unit/distance_metric_tests.cpp
     tests/unit/instability_metric_tests.cpp
     tests/unit/metric_registry_tests.cpp
     tests/unit/report_writer_tests.cpp
@@ -101,18 +102,18 @@ if(BUILD_TESTING)
       "${PROJECT_SOURCE_DIR}/tests/system/expected")
   set(ARCHSCOPE_SYSTEM_SCRIPT_DIR "${PROJECT_SOURCE_DIR}/tests/system")
   set(ARCHSCOPE_SYSTEM_REPORT_DIR "${PROJECT_BINARY_DIR}/tests/system")
-  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT_NAME
-      "check_translation_unit_instability_report.cmake")
-  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME
-      "translation-unit-instability-report.md")
+  set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT_NAME
+      "check_translation_unit_distance_report.cmake")
+  set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME
+      "translation-unit-distance-report.md")
   set(ARCHSCOPE_VERSION_CHECK_SCRIPT
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}/check_version.cmake")
   set(ARCHSCOPE_PLACEHOLDER_CHECK_SCRIPT
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}/check_placeholder_report.cmake")
-  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT
+  set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
-  cmake_path(APPEND ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT
-             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT_NAME}")
+  cmake_path(APPEND ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT
+             "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT_NAME}")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/placeholder_project")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE
@@ -127,10 +128,10 @@ if(BUILD_TESTING)
       "${ARCHSCOPE_DEPENDENCY_FIXTURE_DIR}/compile_commands.json")
   set(ARCHSCOPE_DEPENDENCY_EXPECTED "${ARCHSCOPE_SYSTEM_EXPECTED_DIR}")
   cmake_path(APPEND ARCHSCOPE_DEPENDENCY_EXPECTED
-             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME}")
+             "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME}")
   set(ARCHSCOPE_DEPENDENCY_REPORT "${ARCHSCOPE_SYSTEM_REPORT_DIR}")
   cmake_path(APPEND ARCHSCOPE_DEPENDENCY_REPORT
-             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME}")
+             "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME}")
   catch_discover_tests(archscope_tests)
   add_test(
     NAME archscope_system_version
@@ -147,11 +148,11 @@ if(BUILD_TESTING)
       -DREPORT_OUTPUT=${ARCHSCOPE_PLACEHOLDER_REPORT} -P
       ${ARCHSCOPE_PLACEHOLDER_CHECK_SCRIPT})
   add_test(
-    NAME archscope_system_translation_unit_instability
+    NAME archscope_system_translation_unit_distance
     COMMAND
       ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
       "-DFIXTURE_DB=${ARCHSCOPE_DEPENDENCY_FIXTURE}"
       "-DEXPECTED_FILE=${ARCHSCOPE_DEPENDENCY_EXPECTED}"
       "-DREPORT_OUTPUT=${ARCHSCOPE_DEPENDENCY_REPORT}" -P
-      "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT}")
+      "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT}")
 endif()

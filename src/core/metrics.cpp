@@ -1,5 +1,6 @@
 #include "core/metrics.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -59,10 +60,17 @@ double compute_instability(const AnalysisResult &analysis,
   return static_cast<double>(ce) / static_cast<double>(total);
 }
 
+double compute_distance_from_main_sequence(const double abstractness,
+                                           const double instability) {
+  const double distance = std::abs(abstractness + instability - 1.0);
+  return std::clamp(distance, 0.0, 1.0);
+}
+
 double compute_distance_from_main_sequence(const AnalysisResult &analysis,
                                            const ModuleId &module) {
-  return std::abs(compute_abstractness(analysis, module) +
-                  compute_instability(analysis, module) - 1.0);
+  return compute_distance_from_main_sequence(
+      compute_abstractness(analysis, module),
+      compute_instability(analysis, module));
 }
 
 MetricRegistry MetricRegistry::with_defaults() {
@@ -70,7 +78,8 @@ MetricRegistry MetricRegistry::with_defaults() {
   registry.registry_.emplace(MetricId::abstractness, &compute_abstractness);
   registry.registry_.emplace(MetricId::instability, &compute_instability);
   registry.registry_.emplace(MetricId::distance_from_main_sequence,
-                             &compute_distance_from_main_sequence);
+                             static_cast<MetricRegistry::MetricFn>(
+                                 &compute_distance_from_main_sequence));
   return registry;
 }
 

@@ -43,7 +43,9 @@ Clang LibTooling, enumerates user-defined class/struct definitions with
 qualified names, definition paths, and abstract/concrete classification, and
 extracts translation-unit dependency candidates from base classes, fields, and
 function signatures. `instability` is computed from the resulting `Ce/Ca`
-graph. The next increment adds dedicated distance-from-main-sequence coverage.
+graph, and `distance_from_main_sequence` is now covered directly in unit and
+system tests with a golden translation-unit fixture. The next increment adds
+namespace modules plus module-name prefix filtering.
 
 ## Repository layout
 
