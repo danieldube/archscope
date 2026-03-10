@@ -31,7 +31,8 @@ if(NOT archscope_result EQUAL 0)
 endif()
 
 if(NOT archscope_output STREQUAL "")
-  message(FATAL_ERROR "Expected no stdout output but got '${archscope_output}'")
+  message(
+    FATAL_ERROR "Expected no stdout output but got '${archscope_output}'")
 endif()
 
 file(READ "${EXPECTED_FILE}" expected_output)
