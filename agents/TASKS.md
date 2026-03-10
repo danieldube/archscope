@@ -128,7 +128,7 @@ No metric computation yet; just extraction.
   - ignoring self-dependencies
   - ignoring system headers
 
-### Task 4.2 — Implement dependency extraction in visitor
+### Task 4.2 — Implement dependency extraction in visitor [completed]
 Track referenced types via:
 - base classes
 - fields
@@ -136,7 +136,7 @@ Track referenced types via:
 
 Resolve referenced decl location → owner module.
 
-### Task 4.3 — Compute Ce / Ca / I
+### Task 4.3 — Compute Ce / Ca / I [completed]
 - Implement instability metric with corner case Ce+Ca=0 -> I=0.
 
 **Acceptance**

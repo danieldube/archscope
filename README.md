@@ -3,8 +3,8 @@
 ArchScope is a C++17 command-line tool for computing architecture metrics over
 projects that provide a `compile_commands.json` database. The current codebase
 includes the bootstrap CLI, a tested compilation-database loader, a Clang
-LibTooling extraction layer for C++ type discovery, and the placeholder
-Markdown report flow for translation-unit modules.
+LibTooling extraction layer for C++ type and dependency discovery, and a
+deterministic Markdown report flow for translation-unit modules.
 
 ## Quick start
 
@@ -38,11 +38,12 @@ The CLI now accepts a compilation database path, one or more metric ids, and
 `--module=translation_unit`, then writes a deterministic Markdown report.
 `abstractness`, `instability`, and `distance_from_main_sequence` are now wired
 through the metric registry and emitted in requested CLI order for
-translation-unit modules. The dependency graph is still empty at this stage, so
-`instability` defaults to `0.000` and distance currently reflects `|A-1|`. Under the hood,
-`archscope_clang` parses translation units with Clang LibTooling and enumerates
-user-defined class/struct definitions with qualified names, definition paths,
-and abstract/concrete classification.
+translation-unit modules. `archscope_clang` now parses translation units with
+Clang LibTooling, enumerates user-defined class/struct definitions with
+qualified names, definition paths, and abstract/concrete classification, and
+extracts translation-unit dependency candidates from base classes, fields, and
+function signatures. `instability` is computed from the resulting `Ce/Ca`
+graph. The next increment adds dedicated distance-from-main-sequence coverage.
 
 ## Repository layout
 

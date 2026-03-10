@@ -63,7 +63,23 @@ load_database(const TemporaryProject &project) {
 std::vector<archscope::clang_backend::ExtractedType>
 extract_types(const TemporaryProject &project) {
   const auto extracted =
-      archscope::clang_backend::extract_types(load_database(project));
+      archscope::clang_backend::extract_analysis(load_database(project));
+  const std::string diagnostic =
+      extracted.has_value()
+          ? std::string{}
+          : extracted.error().message + " :: " +
+                (extracted.error().failed_translation_units.empty()
+                     ? std::string{"<none>"}
+                     : extracted.error().failed_translation_units.front());
+  INFO(diagnostic);
+  REQUIRE(extracted.has_value());
+  return extracted.value().types;
+}
+
+archscope::clang_backend::ExtractionResult
+extract_analysis(const TemporaryProject &project) {
+  const auto extracted =
+      archscope::clang_backend::extract_analysis(load_database(project));
   const std::string diagnostic =
       extracted.has_value()
           ? std::string{}
@@ -163,6 +179,47 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
   }));
 }
 
+TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
+          "[clang][extract]") {
+  TemporaryProject project("archscope-clang-tool-runner-dependencies");
+
+  project.write_file("src/beta.cpp", "struct Beta {};\n");
+  project.write_file("src/alpha.cpp", "#include \"beta.cpp\"\n"
+                                      "struct Derived : Beta {};\n"
+                                      "struct Alpha {\n"
+                                      "  Beta member;\n"
+                                      "  Beta make(Beta value);\n"
+                                      "};\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/alpha.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/beta.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/beta.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto analysis = extract_analysis(project);
+
+  REQUIRE(analysis.dependencies ==
+          std::vector<archscope::clang_backend::ExtractedDependency>{
+              {"src/alpha.cpp", "src/beta.cpp", false},
+              {"src/alpha.cpp", "src/beta.cpp", false},
+              {"src/alpha.cpp", "src/beta.cpp", false},
+              {"src/alpha.cpp", "src/beta.cpp", false},
+          });
+}
+
 TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
   TemporaryProject project("archscope-clang-tool-runner-failure");
 
@@ -182,7 +239,7 @@ TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
                                  "]\n");
 
   const auto extracted =
-      archscope::clang_backend::extract_types(load_database(project));
+      archscope::clang_backend::extract_analysis(load_database(project));
 
   REQUIRE_FALSE(extracted.has_value());
   REQUIRE(extracted.error().failed_translation_units ==

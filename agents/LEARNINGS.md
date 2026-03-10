@@ -41,3 +41,5 @@
     related native dependencies such as `libcurl4-openssl-dev` are installed.
 12. Use the dedicated `apply_patch` tool for patch edits instead of invoking `apply_patch` through shell commands. Tool misuse triggers avoidable warnings and can break automation expectations.
 13. When tests are registered through Catch2 `catch_discover_tests()`, do not assume there is a CTest target named after the source file. Inspect discovered test names or run the full suite; otherwise `ctest -R <guessed-name>` can report "No tests were found" and waste verification time.
+14. Do not advance to the next roadmap increment just because a metric function already exists in code. Verify the current increment against its integration points and acceptance tests first; Increment 4 still had an empty CLI dependency graph even though `compute_instability()` was present.
+15. Keep checked-in `compile_commands.json` fixtures portable. Absolute `directory` paths make the fixture unusable outside the test harness; resolve relative directories from the database location in the loader and let system tests exercise the checked-in file directly.

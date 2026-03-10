@@ -23,6 +23,23 @@ struct ExtractedType {
   }
 };
 
+struct ExtractedDependency {
+  std::string from_translation_unit_path;
+  std::string target_translation_unit_path;
+  bool is_system = false;
+
+  [[nodiscard]] bool operator==(const ExtractedDependency &other) const {
+    return from_translation_unit_path == other.from_translation_unit_path &&
+           target_translation_unit_path == other.target_translation_unit_path &&
+           is_system == other.is_system;
+  }
+};
+
+struct ExtractionResult {
+  std::vector<ExtractedType> types;
+  std::vector<ExtractedDependency> dependencies;
+};
+
 struct ToolRunnerError {
   std::string message;
   std::vector<std::string> failed_translation_units;
@@ -51,7 +68,7 @@ private:
   std::optional<ToolRunnerError> error_;
 };
 
-Result<std::vector<ExtractedType>>
-extract_types(const core::CompilationDatabase &database);
+Result<ExtractionResult>
+extract_analysis(const core::CompilationDatabase &database);
 
 } // namespace archscope::clang_backend

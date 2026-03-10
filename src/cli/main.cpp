@@ -135,19 +135,30 @@ std::string derive_project_name(const CliOptions &options) {
 }
 
 archscope::core::AnalysisResult build_translation_unit_analysis_result(
-    const std::vector<archscope::clang_backend::ExtractedType> &types) {
+    const archscope::clang_backend::ExtractionResult &extraction) {
   std::vector<archscope::core::TypeInfo> analysis_types;
-  analysis_types.reserve(types.size());
+  analysis_types.reserve(extraction.types.size());
 
-  for (const auto &type : types) {
+  for (const auto &type : extraction.types) {
     analysis_types.push_back(
         {archscope::core::TypeId{type.qualified_name},
          archscope::core::ModuleId{type.translation_unit_path},
          type.is_abstract, !type.is_abstract});
   }
 
-  return archscope::core::assemble_analysis_result(std::move(analysis_types),
-                                                   {});
+  std::vector<archscope::core::DependencyCandidate> dependencies;
+  dependencies.reserve(extraction.dependencies.size());
+
+  for (const auto &dependency : extraction.dependencies) {
+    dependencies.push_back(
+        {archscope::core::ModuleId{dependency.from_translation_unit_path},
+         archscope::core::ModuleId{dependency.target_translation_unit_path},
+         dependency.is_system});
+  }
+
+  return archscope::core::assemble_analysis_result(
+      std::move(analysis_types),
+      archscope::core::build_dependency_graph(dependencies));
 }
 
 int run_cli(const std::vector<std::string> &args) {
@@ -171,20 +182,20 @@ int run_cli(const std::vector<std::string> &args) {
     return 3;
   }
 
-  const auto extracted_types =
-      archscope::clang_backend::extract_types(database.value());
-  if (!extracted_types.has_value()) {
-    std::cerr << "error: " << extracted_types.error().message;
-    if (!extracted_types.error().failed_translation_units.empty()) {
+  const auto extracted_analysis =
+      archscope::clang_backend::extract_analysis(database.value());
+  if (!extracted_analysis.has_value()) {
+    std::cerr << "error: " << extracted_analysis.error().message;
+    if (!extracted_analysis.error().failed_translation_units.empty()) {
       std::cerr << ": "
-                << extracted_types.error().failed_translation_units.front();
+                << extracted_analysis.error().failed_translation_units.front();
     }
     std::cerr << '\n';
     return 4;
   }
 
   const auto analysis_result =
-      build_translation_unit_analysis_result(extracted_types.value());
+      build_translation_unit_analysis_result(extracted_analysis.value());
   const auto metric_registry = archscope::core::MetricRegistry::with_defaults();
 
   archscope::core::ReportModel report{

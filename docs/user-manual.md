@@ -27,11 +27,24 @@ Example:
   --report=architecture-metrics.md
 ```
 
+The current translation-unit instability fixture produces:
+
+- `src/alpha.cpp` with `Instability: 1.000`
+- `src/beta.cpp` with `Instability: 0.000`
+
+You can run that fixture directly from the repository root:
+
+```bash
+./build/archscope tests/fixtures/dependency_project/compile_commands.json \
+  instability --module=translation_unit --report=/tmp/instability-report.md
+```
+
 ## Implementation note
 
-This increment keeps the user-visible report output unchanged, but the build now
-requires Clang LibTooling development packages because the internal analysis
-pipeline can parse translation units and enumerate class/struct definitions.
+This increment requires Clang LibTooling development packages because the
+analysis pipeline now parses translation units, enumerates class/struct
+definitions, and extracts outgoing dependencies from base classes, fields, and
+function signatures.
 
 ## Build and test
 

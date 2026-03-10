@@ -291,6 +291,22 @@ CompilationDatabaseEntry parse_entry(const JsonValue &entry_value) {
 
 } // namespace
 
+namespace {
+
+std::string
+normalize_working_directory(const std::filesystem::path &database_path,
+                            const std::string &working_directory) {
+  const std::filesystem::path raw_path(working_directory);
+  if (raw_path.is_absolute()) {
+    return raw_path.lexically_normal().string();
+  }
+
+  const std::filesystem::path base_directory = database_path.parent_path();
+  return (base_directory / raw_path).lexically_normal().string();
+}
+
+} // namespace
+
 std::vector<std::string> CompilationDatabase::translation_unit_paths() const {
   std::vector<std::string> paths;
   paths.reserve(entries.size());
@@ -324,7 +340,10 @@ load_compilation_database(const std::filesystem::path &path) {
     CompilationDatabase database;
     const JsonValue root = JsonParser(buffer.str()).parse();
     for (const JsonValue &entry : as_array(root)) {
-      database.entries.push_back(parse_entry(entry));
+      CompilationDatabaseEntry parsed_entry = parse_entry(entry);
+      parsed_entry.working_directory =
+          normalize_working_directory(path, parsed_entry.working_directory);
+      database.entries.push_back(std::move(parsed_entry));
     }
     return Result<CompilationDatabase>::success(std::move(database));
   } catch (const std::runtime_error &error) {

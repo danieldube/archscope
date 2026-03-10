@@ -16,9 +16,8 @@ endif()
 
 execute_process(
   COMMAND
-    "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" instability abstractness
-    --module=translation_unit --project-name=placeholder_project
-    "--report=${REPORT_OUTPUT}"
+    "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" instability --module=translation_unit
+    --project-name=dependency_fixture "--report=${REPORT_OUTPUT}"
   RESULT_VARIABLE archscope_result
   OUTPUT_VARIABLE archscope_output
   ERROR_VARIABLE archscope_error
@@ -26,7 +25,7 @@ execute_process(
 
 if(NOT archscope_result EQUAL 0)
   message(
-    FATAL_ERROR "archscope placeholder run failed with ${archscope_result}: "
+    FATAL_ERROR "archscope instability run failed with ${archscope_result}: "
                 "${archscope_error}")
 endif()
 
@@ -38,5 +37,6 @@ file(READ "${EXPECTED_FILE}" expected_output)
 file(READ "${REPORT_OUTPUT}" actual_output)
 
 if(NOT actual_output STREQUAL expected_output)
-  message(FATAL_ERROR "Generated report did not match expected output.")
+  message(
+    FATAL_ERROR "Generated instability report did not match expected output.")
 endif()

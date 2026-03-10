@@ -66,20 +66,25 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   abstractness, instability, and distance from the main sequence.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
-  type records, including whether each definition is abstract.
+  type records plus translation-unit dependency candidates derived from base
+  classes, fields, and function signatures.
 - `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
   registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
   `directory` + `file` + either `arguments` or `command`.
+- Relative `directory` values in `compile_commands.json` are resolved from the
+  directory that contains the database, so checked-in test fixtures remain
+  runnable without per-test rewrites.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
 - The CLI requests metric computation through `MetricRegistry`, preserving user
   metric order in the emitted report.
 - The Clang extraction layer currently collects class/struct definitions,
-  definition file paths, and qualified names while excluding forward
-  declarations and system-header types.
+  definition file paths, qualified names, and outgoing dependency candidates
+  while excluding forward declarations and system-header types from the type
+  inventory.
 
 ## Next implementation steps
 
-The next increment wires the extracted types into translation-unit module
-ownership and then replaces placeholder metric values incrementally.
+The next increment adds dedicated coverage for distance from the main sequence
+and keeps report formatting stable as all three metrics are emitted together.

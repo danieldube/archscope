@@ -142,3 +142,34 @@ TEST_CASE("loader extracts translation unit paths and compile arguments",
   REQUIRE(result.value().entries[0].arguments[1] == "-DNAME=Arch Scope");
   REQUIRE(result.value().entries[1].arguments[2] == "-Winvalid-pch");
 }
+
+TEST_CASE("loader resolves relative working directories from database location",
+          "[compilation-database]") {
+  const std::filesystem::path fixture_directory =
+      test_root() / "relative-working-directory";
+  std::filesystem::create_directories(fixture_directory / "build");
+
+  const std::filesystem::path db_path =
+      write_fixture("relative-working-directory/compile_commands.json",
+                    R"json([
+  {
+    "directory": "./build",
+    "file": "../src/alpha.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "../src/alpha.cpp"
+    ]
+  }
+])json");
+
+  const auto result =
+      archscope::core::load_compilation_database(db_path.string());
+
+  REQUIRE(result.has_value());
+  REQUIRE(result.value().entries.size() == 1U);
+  expect_valid_entry(result.value().entries[0],
+                     (fixture_directory / "build").lexically_normal().string(),
+                     "../src/alpha.cpp",
+                     {"clang++", "-std=c++17", "../src/alpha.cpp"});
+}

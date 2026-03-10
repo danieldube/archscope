@@ -1,20 +1,20 @@
 [
   {
     "directory": ".",
-    "file": "src/zeta.cpp",
-    "arguments": [
-      "clang++",
-      "-std=c++17",
-      "src/zeta.cpp"
-    ]
-  },
-  {
-    "directory": ".",
     "file": "src/alpha.cpp",
     "arguments": [
       "clang++",
       "-std=c++17",
       "src/alpha.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/beta.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/beta.cpp"
     ]
   }
 ]
