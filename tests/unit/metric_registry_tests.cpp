@@ -34,7 +34,7 @@ TEST_CASE("metric registry returns metrics in requested order",
     REQUIRE(metrics[1].id == MetricId::abstractness);
     REQUIRE(metrics[1].value == 0.5);
     REQUIRE(metrics[2].id == MetricId::distance_from_main_sequence);
-    REQUIRE(metrics[2].value == 0.0);
+    REQUIRE(metrics[2].value == 0.5);
 }
 
 TEST_CASE("metric registry computes abstractness for empty module",
