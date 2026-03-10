@@ -16,17 +16,17 @@ double compute_distance_from_main_sequence(const AnalysisResult &analysis,
                                            const ModuleId &module);
 
 class MetricRegistry {
-  public:
-    using MetricFn = double (*)(const AnalysisResult &, const ModuleId &);
+public:
+  using MetricFn = double (*)(const AnalysisResult &, const ModuleId &);
 
-    [[nodiscard]] static MetricRegistry with_defaults();
+  [[nodiscard]] static MetricRegistry with_defaults();
 
-    [[nodiscard]] std::vector<MetricValue>
-    compute(const AnalysisResult &analysis, const ModuleId &module,
-            const std::vector<MetricId> &requested_metrics) const;
+  [[nodiscard]] std::vector<MetricValue>
+  compute(const AnalysisResult &analysis, const ModuleId &module,
+          const std::vector<MetricId> &requested_metrics) const;
 
-  private:
-    std::unordered_map<MetricId, MetricFn> registry_;
+private:
+  std::unordered_map<MetricId, MetricFn> registry_;
 };
 
 } // namespace archscope::core

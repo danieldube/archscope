@@ -8,28 +8,28 @@
 namespace archscope::core {
 
 enum class MetricId : std::uint8_t {
-    abstractness,
-    instability,
-    distance_from_main_sequence,
+  abstractness,
+  instability,
+  distance_from_main_sequence,
 };
 
 struct MetricValue {
-    MetricId id;
-    double value;
+  MetricId id;
+  double value;
 
-    [[nodiscard]] bool operator==(const MetricValue &other) const {
-        return id == other.id && value == other.value;
-    }
+  [[nodiscard]] bool operator==(const MetricValue &other) const {
+    return id == other.id && value == other.value;
+  }
 };
 
 struct ReportModule {
-    std::string name;
-    std::vector<MetricValue> metrics;
+  std::string name;
+  std::vector<MetricValue> metrics;
 };
 
 struct ReportModel {
-    std::string project_name;
-    std::vector<ReportModule> modules;
+  std::string project_name;
+  std::vector<ReportModule> modules;
 };
 
 std::string metric_display_name(MetricId metric_id);
