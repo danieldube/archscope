@@ -47,6 +47,12 @@ struct ModuleIdHash {
   }
 };
 
+struct DependencyCandidate {
+  ModuleId from;
+  ModuleId target;
+  bool is_system = false;
+};
+
 struct DependencyGraph {
   std::unordered_map<ModuleId, std::unordered_set<ModuleId, ModuleIdHash>,
                      ModuleIdHash>
@@ -64,5 +70,7 @@ struct AnalysisResult {
 
 AnalysisResult assemble_analysis_result(std::vector<TypeInfo> types,
                                         DependencyGraph graph);
+DependencyGraph
+build_dependency_graph(const std::vector<DependencyCandidate> &candidates);
 
 } // namespace archscope::core

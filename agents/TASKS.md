@@ -103,7 +103,7 @@ No metric computation yet; just extraction.
   - only abstract -> A=1
   - only concrete -> A=0
 
-### Task 3.2 — Implement “abstract vs concrete” classification
+### Task 3.2 — Implement “abstract vs concrete” classification [completed]
 - Use `CXXRecordDecl::isAbstract()` for definitions.
 - Exclude forward decls and system headers.
 
@@ -122,7 +122,7 @@ No metric computation yet; just extraction.
 
 ## Increment 4 — Dependency extraction (outgoing) for translation_unit modules
 
-### Task 4.1 — Tests first: dependency graph builder
+### Task 4.1 — Tests first: dependency graph builder [completed]
 - Unit tests for:
   - edge deduplication
   - ignoring self-dependencies
