@@ -47,4 +47,18 @@ AnalysisResult assemble_analysis_result(std::vector<TypeInfo> types,
   return result;
 }
 
+DependencyGraph
+build_dependency_graph(const std::vector<DependencyCandidate> &candidates) {
+  DependencyGraph graph;
+
+  for (const DependencyCandidate &candidate : candidates) {
+    if (candidate.is_system || candidate.from == candidate.target) {
+      continue;
+    }
+    graph.add_dependency(candidate.from, candidate.target);
+  }
+
+  return graph;
+}
+
 } // namespace archscope::core

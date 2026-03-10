@@ -40,3 +40,4 @@
     but the configure still fails unless `libclang-18-dev`, `llvm-18-dev`, and
     related native dependencies such as `libcurl4-openssl-dev` are installed.
 12. Use the dedicated `apply_patch` tool for patch edits instead of invoking `apply_patch` through shell commands. Tool misuse triggers avoidable warnings and can break automation expectations.
+13. When tests are registered through Catch2 `catch_discover_tests()`, do not assume there is a CTest target named after the source file. Inspect discovered test names or run the full suite; otherwise `ctest -R <guessed-name>` can report "No tests were found" and waste verification time.
