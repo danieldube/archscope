@@ -1,0 +1,68 @@
+#include "clang/analysis_projection.hpp"
+
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+namespace archscope::clang_backend {
+
+namespace {
+
+core::ModuleId select_module(const ExtractedType &type,
+                             const core::ModuleKind module_kind) {
+  switch (module_kind) {
+  case core::ModuleKind::namespace_module:
+    return core::ModuleId{type.namespace_module};
+  case core::ModuleKind::translation_unit:
+    return core::ModuleId{type.translation_unit_path};
+  case core::ModuleKind::header:
+    return core::ModuleId{type.definition_path};
+  }
+
+  throw std::invalid_argument("unsupported module kind");
+}
+
+core::DependencyCandidate
+select_dependency(const ExtractedDependency &dependency,
+                  const core::ModuleKind module_kind) {
+  switch (module_kind) {
+  case core::ModuleKind::namespace_module:
+    return {core::ModuleId{dependency.from_namespace_module},
+            core::ModuleId{dependency.target_namespace_module},
+            dependency.is_system};
+  case core::ModuleKind::translation_unit:
+    return {core::ModuleId{dependency.from_translation_unit_path},
+            core::ModuleId{dependency.target_translation_unit_path},
+            dependency.is_system};
+  case core::ModuleKind::header:
+    throw std::invalid_argument("header module projection is not implemented");
+  }
+
+  throw std::invalid_argument("unsupported module kind");
+}
+
+} // namespace
+
+core::AnalysisResult project_analysis(const ExtractionResult &extraction,
+                                      const core::ModuleKind module_kind) {
+  std::vector<core::TypeInfo> analysis_types;
+  analysis_types.reserve(extraction.types.size());
+
+  for (const auto &type : extraction.types) {
+    analysis_types.push_back({core::TypeId{type.qualified_name},
+                              select_module(type, module_kind),
+                              type.is_abstract, !type.is_abstract});
+  }
+
+  std::vector<core::DependencyCandidate> dependencies;
+  dependencies.reserve(extraction.dependencies.size());
+
+  for (const auto &dependency : extraction.dependencies) {
+    dependencies.push_back(select_dependency(dependency, module_kind));
+  }
+
+  return core::assemble_analysis_result(
+      std::move(analysis_types), core::build_dependency_graph(dependencies));
+}
+
+} // namespace archscope::clang_backend

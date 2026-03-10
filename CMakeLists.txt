@@ -50,12 +50,19 @@ endif()
 
 add_library(
   archscope_core STATIC
-  src/core/analysis.cpp src/core/cli_text.cpp
-  src/core/compilation_database.cpp src/core/metrics.cpp src/core/report.cpp
+  src/core/analysis.cpp
+  src/core/cli_text.cpp
+  src/core/compilation_database.cpp
+  src/core/metrics.cpp
+  src/core/module_filter.cpp
+  src/core/report.cpp
   src/core/version.cpp)
 add_library(ArchScope::core ALIAS archscope_core)
 
-add_library(archscope_clang STATIC src/clang/tool_runner.cpp)
+add_library(
+  archscope_clang STATIC
+  src/clang/analysis_projection.cpp src/clang/namespace_module_resolver.cpp
+  src/clang/tool_runner.cpp)
 add_library(ArchScope::clang ALIAS archscope_clang)
 
 target_include_directories(archscope_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
@@ -79,6 +86,7 @@ if(BUILD_TESTING)
     archscope_tests
     tests/unit/abstractness_metric_tests.cpp
     tests/unit/analysis_result_tests.cpp
+    tests/unit/analysis_projection_tests.cpp
     tests/unit/cli_text_tests.cpp
     tests/unit/clang_tool_runner_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
@@ -86,9 +94,13 @@ if(BUILD_TESTING)
     tests/unit/distance_metric_tests.cpp
     tests/unit/instability_metric_tests.cpp
     tests/unit/metric_registry_tests.cpp
+    tests/unit/module_filter_tests.cpp
+    tests/unit/namespace_module_resolver_tests.cpp
     tests/unit/report_writer_tests.cpp
     tests/unit/version_tests.cpp)
   target_include_directories(archscope_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+  target_include_directories(
+    archscope_tests SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
   target_link_libraries(
     archscope_tests PRIVATE ArchScope::core ArchScope::clang
                             Catch2::Catch2WithMain)
@@ -104,8 +116,11 @@ if(BUILD_TESTING)
   set(ARCHSCOPE_SYSTEM_REPORT_DIR "${PROJECT_BINARY_DIR}/tests/system")
   set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT_NAME
       "check_translation_unit_distance_report.cmake")
+  set(ARCHSCOPE_NAMESPACE_FILTER_CHECK_SCRIPT_NAME
+      "check_namespace_filter_report.cmake")
   set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME
       "translation-unit-distance-report.md")
+  set(ARCHSCOPE_NAMESPACE_FILTER_REPORT_NAME "namespace-filter-report.md")
   set(ARCHSCOPE_VERSION_CHECK_SCRIPT
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}/check_version.cmake")
   set(ARCHSCOPE_PLACEHOLDER_CHECK_SCRIPT
@@ -114,6 +129,9 @@ if(BUILD_TESTING)
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
   cmake_path(APPEND ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT
              "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT_NAME}")
+  set(ARCHSCOPE_NAMESPACE_FILTER_CHECK_SCRIPT "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_NAMESPACE_FILTER_CHECK_SCRIPT
+             "${ARCHSCOPE_NAMESPACE_FILTER_CHECK_SCRIPT_NAME}")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/placeholder_project")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE
@@ -132,6 +150,16 @@ if(BUILD_TESTING)
   set(ARCHSCOPE_DEPENDENCY_REPORT "${ARCHSCOPE_SYSTEM_REPORT_DIR}")
   cmake_path(APPEND ARCHSCOPE_DEPENDENCY_REPORT
              "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME}")
+  set(ARCHSCOPE_NAMESPACE_FIXTURE_DIR
+      "${PROJECT_SOURCE_DIR}/tests/fixtures/namespace_project")
+  set(ARCHSCOPE_NAMESPACE_FIXTURE
+      "${ARCHSCOPE_NAMESPACE_FIXTURE_DIR}/compile_commands.json")
+  set(ARCHSCOPE_NAMESPACE_EXPECTED "${ARCHSCOPE_SYSTEM_EXPECTED_DIR}")
+  cmake_path(APPEND ARCHSCOPE_NAMESPACE_EXPECTED
+             "${ARCHSCOPE_NAMESPACE_FILTER_REPORT_NAME}")
+  set(ARCHSCOPE_NAMESPACE_REPORT "${ARCHSCOPE_SYSTEM_REPORT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_NAMESPACE_REPORT
+             "${ARCHSCOPE_NAMESPACE_FILTER_REPORT_NAME}")
   catch_discover_tests(archscope_tests)
   add_test(
     NAME archscope_system_version
@@ -155,4 +183,12 @@ if(BUILD_TESTING)
       "-DEXPECTED_FILE=${ARCHSCOPE_DEPENDENCY_EXPECTED}"
       "-DREPORT_OUTPUT=${ARCHSCOPE_DEPENDENCY_REPORT}" -P
       "${ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_namespace_filter
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DFIXTURE_DB=${ARCHSCOPE_NAMESPACE_FIXTURE}"
+      "-DEXPECTED_FILE=${ARCHSCOPE_NAMESPACE_EXPECTED}"
+      "-DREPORT_OUTPUT=${ARCHSCOPE_NAMESPACE_REPORT}" -P
+      "${ARCHSCOPE_NAMESPACE_FILTER_CHECK_SCRIPT}")
 endif()

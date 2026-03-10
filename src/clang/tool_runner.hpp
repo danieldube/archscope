@@ -12,12 +12,14 @@ namespace archscope::clang_backend {
 struct ExtractedType {
   std::string translation_unit_path;
   std::string definition_path;
+  std::string namespace_module;
   std::string qualified_name;
   bool is_abstract = false;
 
   [[nodiscard]] bool operator==(const ExtractedType &other) const {
     return translation_unit_path == other.translation_unit_path &&
            definition_path == other.definition_path &&
+           namespace_module == other.namespace_module &&
            qualified_name == other.qualified_name &&
            is_abstract == other.is_abstract;
   }
@@ -25,12 +27,16 @@ struct ExtractedType {
 
 struct ExtractedDependency {
   std::string from_translation_unit_path;
+  std::string from_namespace_module;
   std::string target_translation_unit_path;
+  std::string target_namespace_module;
   bool is_system = false;
 
   [[nodiscard]] bool operator==(const ExtractedDependency &other) const {
     return from_translation_unit_path == other.from_translation_unit_path &&
+           from_namespace_module == other.from_namespace_module &&
            target_translation_unit_path == other.target_translation_unit_path &&
+           target_namespace_module == other.target_namespace_module &&
            is_system == other.is_system;
   }
 };

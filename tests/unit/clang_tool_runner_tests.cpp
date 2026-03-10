@@ -151,24 +151,28 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                        {
                            "src/alpha.cpp",
                            (project.root() / "include/common.hpp").string(),
+                           "sample",
                            "sample::Shared",
                            false,
                        },
                        {
                            "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
+                           "sample",
                            "sample::Alpha",
                            false,
                        },
                        {
                            "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
+                           "sample",
                            "sample::Interface",
                            true,
                        },
                        {
                            "src/zeta.cpp",
                            (project.root() / "src/zeta.cpp").string(),
+                           "sample::detail",
                            "sample::detail::Zeta",
                            false,
                        },
@@ -213,10 +217,10 @@ TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
 
   REQUIRE(analysis.dependencies ==
           std::vector<archscope::clang_backend::ExtractedDependency>{
-              {"src/alpha.cpp", "src/beta.cpp", false},
-              {"src/alpha.cpp", "src/beta.cpp", false},
-              {"src/alpha.cpp", "src/beta.cpp", false},
-              {"src/alpha.cpp", "src/beta.cpp", false},
+              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
+              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
+              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
+              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
           });
 }
 

@@ -168,16 +168,16 @@ Resolve referenced decl location → owner module.
 
 ## Increment 6 — Namespace modules (ownership + filtering)
 
-### Task 6.1 — Tests first: namespace module resolver
+### Task 6.1 — Tests first: namespace module resolver [completed]
 - Unit tests for:
   - global namespace
   - nested namespaces
   - anonymous namespaces
 
-### Task 6.2 — Implement namespace ownership
+### Task 6.2 — Implement namespace ownership [completed]
 - Owner = fully qualified namespace of the type definition.
 
-### Task 6.3 — Implement `--module-filter` prefix behavior
+### Task 6.3 — Implement `--module-filter` prefix behavior [completed]
 - Filter module output only (analysis still processes all).
 
 **Acceptance**

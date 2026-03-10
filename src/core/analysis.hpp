@@ -7,6 +7,12 @@
 
 namespace archscope::core {
 
+enum class ModuleKind {
+  namespace_module,
+  translation_unit,
+  header,
+};
+
 struct ModuleId {
   std::string value;
 

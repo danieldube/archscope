@@ -1,10 +1,13 @@
 #include "core/cli_text.hpp"
 #include "core/compilation_database.hpp"
 #include "core/metrics.hpp"
+#include "core/module_filter.hpp"
 #include "core/report.hpp"
 #include "core/version.hpp"
+#include "clang/analysis_projection.hpp"
 #include "clang/tool_runner.hpp"
 
+#include <algorithm>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -17,7 +20,9 @@ namespace {
 struct CliOptions {
   std::filesystem::path compile_commands_path;
   std::vector<archscope::core::MetricId> metrics;
-  std::string module_kind;
+  archscope::core::ModuleKind module_kind =
+      archscope::core::ModuleKind::translation_unit;
+  std::optional<std::string> module_filter;
   std::filesystem::path report_path = "architecture-metrics.md";
   std::optional<std::string> project_name_override;
 };
@@ -36,6 +41,20 @@ parse_metric_id(const std::string &value) {
   }
   if (value == "distance_from_main_sequence") {
     return archscope::core::MetricId::distance_from_main_sequence;
+  }
+  return std::nullopt;
+}
+
+std::optional<archscope::core::ModuleKind>
+parse_module_kind(const std::string &value) {
+  if (value == "translation_unit") {
+    return archscope::core::ModuleKind::translation_unit;
+  }
+  if (value == "namespace") {
+    return archscope::core::ModuleKind::namespace_module;
+  }
+  if (value == "header") {
+    return archscope::core::ModuleKind::header;
   }
   return std::nullopt;
 }
@@ -84,7 +103,13 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
   for (; index < args.size(); ++index) {
     const std::string &argument = args[index];
     if (argument.rfind("--module=", 0) == 0) {
-      options.module_kind = argument.substr(std::string("--module=").size());
+      const auto module_kind =
+          parse_module_kind(argument.substr(std::string("--module=").size()));
+      if (!module_kind.has_value()) {
+        error_message = "unsupported module kind";
+        return std::nullopt;
+      }
+      options.module_kind = *module_kind;
       continue;
     }
     if (argument.rfind("--report=", 0) == 0) {
@@ -96,19 +121,20 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
           argument.substr(std::string("--project-name=").size());
       continue;
     }
+    if (argument.rfind("--module-filter=", 0) == 0) {
+      options.module_filter =
+          argument.substr(std::string("--module-filter=").size());
+      continue;
+    }
 
     error_message = "unsupported option: " + argument;
     return std::nullopt;
   }
 
-  if (options.module_kind.empty()) {
+  if (std::none_of(args.begin(), args.end(), [](const std::string &argument) {
+        return argument.rfind("--module=", 0) == 0;
+      })) {
     error_message = "missing required option: --module=<kind>";
-    return std::nullopt;
-  }
-
-  if (options.module_kind != "translation_unit") {
-    error_message =
-        "only --module=translation_unit is supported in this increment";
     return std::nullopt;
   }
 
@@ -132,33 +158,6 @@ std::string derive_project_name(const CliOptions &options) {
   }
 
   return name;
-}
-
-archscope::core::AnalysisResult build_translation_unit_analysis_result(
-    const archscope::clang_backend::ExtractionResult &extraction) {
-  std::vector<archscope::core::TypeInfo> analysis_types;
-  analysis_types.reserve(extraction.types.size());
-
-  for (const auto &type : extraction.types) {
-    analysis_types.push_back(
-        {archscope::core::TypeId{type.qualified_name},
-         archscope::core::ModuleId{type.translation_unit_path},
-         type.is_abstract, !type.is_abstract});
-  }
-
-  std::vector<archscope::core::DependencyCandidate> dependencies;
-  dependencies.reserve(extraction.dependencies.size());
-
-  for (const auto &dependency : extraction.dependencies) {
-    dependencies.push_back(
-        {archscope::core::ModuleId{dependency.from_translation_unit_path},
-         archscope::core::ModuleId{dependency.target_translation_unit_path},
-         dependency.is_system});
-  }
-
-  return archscope::core::assemble_analysis_result(
-      std::move(analysis_types),
-      archscope::core::build_dependency_graph(dependencies));
 }
 
 int run_cli(const std::vector<std::string> &args) {
@@ -194,8 +193,13 @@ int run_cli(const std::vector<std::string> &args) {
     return 4;
   }
 
-  const auto analysis_result =
-      build_translation_unit_analysis_result(extracted_analysis.value());
+  if (parsed->module_kind == archscope::core::ModuleKind::header) {
+    std::cerr << "error: --module=header is not supported in this increment\n";
+    return 2;
+  }
+
+  const auto analysis_result = archscope::clang_backend::project_analysis(
+      extracted_analysis.value(), parsed->module_kind);
   const auto metric_registry = archscope::core::MetricRegistry::with_defaults();
 
   archscope::core::ReportModel report{
@@ -203,11 +207,14 @@ int run_cli(const std::vector<std::string> &args) {
       {},
   };
 
-  for (const std::string &path : database.value().translation_unit_paths()) {
+  for (const archscope::core::ModuleId &module_id : analysis_result.modules) {
+    if (!archscope::core::matches_module_filter(
+            parsed->module_kind, module_id.value, parsed->module_filter)) {
+      continue;
+    }
     archscope::core::ReportModule module{
-        path,
-        metric_registry.compute(
-            analysis_result, archscope::core::ModuleId{path}, parsed->metrics),
+        module_id.value,
+        metric_registry.compute(analysis_result, module_id, parsed->metrics),
     };
     report.modules.push_back(module);
   }

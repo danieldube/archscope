@@ -1,4 +1,5 @@
 #include "clang/tool_runner.hpp"
+#include "clang/namespace_module_resolver.hpp"
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
@@ -147,6 +148,7 @@ std::optional<ExtractedDependency>
 make_dependency(const clang::SourceManager &source_manager,
                 const TranslationUnitPathMap &translation_unit_paths,
                 const std::string &translation_unit_path,
+                const std::string &from_namespace_module,
                 const clang::NamedDecl *declaration) {
   if (declaration == nullptr) {
     return std::nullopt;
@@ -164,8 +166,11 @@ make_dependency(const clang::SourceManager &source_manager,
   }
 
   const std::string normalized_path = normalize_path(file_name.str());
+  const std::string target_namespace_module =
+      resolve_namespace_module(*declaration);
   if (source_manager.isInSystemHeader(spelling_location)) {
-    return ExtractedDependency{translation_unit_path, normalized_path, true};
+    return ExtractedDependency{translation_unit_path, from_namespace_module,
+                               normalized_path, target_namespace_module, true};
   }
 
   const auto found = translation_unit_paths.find(normalized_path);
@@ -173,36 +178,38 @@ make_dependency(const clang::SourceManager &source_manager,
     return std::nullopt;
   }
 
-  return ExtractedDependency{translation_unit_path, found->second, false};
+  return ExtractedDependency{translation_unit_path, from_namespace_module,
+                             found->second, target_namespace_module, false};
 }
 
 void collect_dependencies_from_type(
     clang::QualType type, clang::ASTContext &context,
     const TranslationUnitPathMap &translation_unit_paths,
     const std::string &translation_unit_path,
+    const std::string &from_namespace_module,
     std::vector<ExtractedDependency> &dependencies) {
   if (type.isNull()) {
     return;
   }
 
   if (const auto *pointer_type = type->getAs<clang::PointerType>()) {
-    collect_dependencies_from_type(pointer_type->getPointeeType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, dependencies);
+    collect_dependencies_from_type(
+        pointer_type->getPointeeType(), context, translation_unit_paths,
+        translation_unit_path, from_namespace_module, dependencies);
     return;
   }
 
   if (const auto *reference_type = type->getAs<clang::ReferenceType>()) {
-    collect_dependencies_from_type(reference_type->getPointeeType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, dependencies);
+    collect_dependencies_from_type(
+        reference_type->getPointeeType(), context, translation_unit_paths,
+        translation_unit_path, from_namespace_module, dependencies);
     return;
   }
 
   if (const auto *array_type = context.getAsArrayType(type)) {
-    collect_dependencies_from_type(array_type->getElementType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, dependencies);
+    collect_dependencies_from_type(
+        array_type->getElementType(), context, translation_unit_paths,
+        translation_unit_path, from_namespace_module, dependencies);
     return;
   }
 
@@ -213,9 +220,9 @@ void collect_dependencies_from_type(
       if (argument.getKind() != clang::TemplateArgument::Type) {
         continue;
       }
-      collect_dependencies_from_type(argument.getAsType(), context,
-                                     translation_unit_paths,
-                                     translation_unit_path, dependencies);
+      collect_dependencies_from_type(
+          argument.getAsType(), context, translation_unit_paths,
+          translation_unit_path, from_namespace_module, dependencies);
     }
   }
 
@@ -226,7 +233,7 @@ void collect_dependencies_from_type(
         definition != nullptr ? definition : record;
     const auto dependency =
         make_dependency(context.getSourceManager(), translation_unit_paths,
-                        translation_unit_path, target);
+                        translation_unit_path, from_namespace_module, target);
     if (dependency.has_value()) {
       dependencies.push_back(*dependency);
     }
@@ -272,20 +279,21 @@ public:
       return true;
     }
 
+    const std::string namespace_module = resolve_namespace_module(*record);
     result_.types.push_back({translation_unit_path_,
-                             normalize_path(file_name.str()), qualified_name,
-                             record->isAbstract()});
+                             normalize_path(file_name.str()), namespace_module,
+                             qualified_name, record->isAbstract()});
 
     for (const clang::CXXBaseSpecifier &base : record->bases()) {
       collect_dependencies_from_type(
           base.getType(), context_, translation_unit_paths_,
-          translation_unit_path_, result_.dependencies);
+          translation_unit_path_, namespace_module, result_.dependencies);
     }
 
     for (const clang::FieldDecl *field : record->fields()) {
       collect_dependencies_from_type(
           field->getType(), context_, translation_unit_paths_,
-          translation_unit_path_, result_.dependencies);
+          translation_unit_path_, namespace_module, result_.dependencies);
     }
     return true;
   }
@@ -295,14 +303,15 @@ public:
       return true;
     }
 
+    const std::string namespace_module = resolve_namespace_module(*function);
     collect_dependencies_from_type(
         function->getReturnType(), context_, translation_unit_paths_,
-        translation_unit_path_, result_.dependencies);
+        translation_unit_path_, namespace_module, result_.dependencies);
 
     for (const clang::ParmVarDecl *parameter : function->parameters()) {
       collect_dependencies_from_type(
           parameter->getType(), context_, translation_unit_paths_,
-          translation_unit_path_, result_.dependencies);
+          translation_unit_path_, namespace_module, result_.dependencies);
     }
 
     return true;

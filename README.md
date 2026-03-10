@@ -4,7 +4,7 @@ ArchScope is a C++17 command-line tool for computing architecture metrics over
 projects that provide a `compile_commands.json` database. The current codebase
 includes the bootstrap CLI, a tested compilation-database loader, a Clang
 LibTooling extraction layer for C++ type and dependency discovery, and a
-deterministic Markdown report flow for translation-unit modules.
+deterministic Markdown report flow for translation-unit and namespace modules.
 
 ## Quick start
 
@@ -30,22 +30,24 @@ pre-commit run --all-files
 ./build/archscope --version
 ./build/archscope tests/fixtures/placeholder_project/compile_commands.json \
   abstractness --module=translation_unit --report=/tmp/archscope-report.md
+./build/archscope tests/fixtures/namespace_project/compile_commands.json \
+  abstractness instability --module=namespace --module-filter=a::b \
+  --report=/tmp/archscope-namespace-report.md
 ```
 
 ## Current status
 
 The CLI now accepts a compilation database path, one or more metric ids, and
-`--module=translation_unit`, then writes a deterministic Markdown report.
-`abstractness`, `instability`, and `distance_from_main_sequence` are now wired
-through the metric registry and emitted in requested CLI order for
-translation-unit modules. `archscope_clang` now parses translation units with
-Clang LibTooling, enumerates user-defined class/struct definitions with
-qualified names, definition paths, and abstract/concrete classification, and
-extracts translation-unit dependency candidates from base classes, fields, and
-function signatures. `instability` is computed from the resulting `Ce/Ca`
-graph, and `distance_from_main_sequence` is now covered directly in unit and
-system tests with a golden translation-unit fixture. The next increment adds
-namespace modules plus module-name prefix filtering.
+`--module=translation_unit` or `--module=namespace`, then writes a
+deterministic Markdown report. `abstractness`, `instability`, and
+`distance_from_main_sequence` are wired through the metric registry and emitted
+in requested CLI order. `archscope_clang` parses translation units with Clang
+LibTooling, enumerates user-defined class/struct definitions with qualified
+names, definition paths, namespace owners, and abstract/concrete
+classification, and extracts dependency candidates from base classes, fields,
+and function signatures. `--module-filter` now filters output modules without
+changing the full analysis pass; namespace filters use prefix matching. The
+next increment adds header-module ownership.
 
 ## Repository layout
 

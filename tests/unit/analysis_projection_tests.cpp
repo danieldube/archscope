@@ -1,0 +1,72 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "core/analysis.hpp"
+#include "clang/analysis_projection.hpp"
+
+#include <unordered_set>
+#include <vector>
+
+TEST_CASE("analysis projection groups extracted data by namespace ownership",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedDependency;
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+  using archscope::core::TypeId;
+  using archscope::core::TypeInfo;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Interface", true},
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Concrete", false},
+          {"src/beta.cpp", "src/beta.cpp", "a::c", "a::c::Leaf", false},
+      },
+      {
+          {"src/alpha.cpp", "a::b", "src/beta.cpp", "a::c", false},
+          {"src/alpha.cpp", "a::b", "src/alpha.cpp", "a::b", false},
+      },
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::namespace_module);
+
+  REQUIRE(analysis.modules ==
+          std::vector<ModuleId>{ModuleId{"a::b"}, ModuleId{"a::c"}});
+  REQUIRE(analysis.types ==
+          std::vector<TypeInfo>{
+              {TypeId{"a::b::Interface"}, ModuleId{"a::b"}, true, false},
+              {TypeId{"a::b::Concrete"}, ModuleId{"a::b"}, false, true},
+              {TypeId{"a::c::Leaf"}, ModuleId{"a::c"}, false, true},
+          });
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"a::b"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"a::c"}});
+}
+
+TEST_CASE("analysis projection preserves translation unit ownership",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedDependency;
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "include/shared.hpp", "a::b", "a::b::Shared",
+           false},
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Alpha", false},
+      },
+      {
+          {"src/alpha.cpp", "a::b", "src/beta.cpp", "a::c", false},
+      },
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::translation_unit);
+
+  REQUIRE(analysis.modules == std::vector<ModuleId>{ModuleId{"src/alpha.cpp"},
+                                                    ModuleId{"src/beta.cpp"}});
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"src/alpha.cpp"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"src/beta.cpp"}});
+}

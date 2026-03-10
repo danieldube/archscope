@@ -64,10 +64,14 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   rendering.
 - `src/core/metrics.*` now provides `MetricRegistry` plus pure computations for
   abstractness, instability, and distance from the main sequence.
+- `src/core/module_filter.*` owns pure module-name matching rules so report
+  filtering stays independent from Clang traversal and metric computation.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
-  type records plus translation-unit dependency candidates derived from base
-  classes, fields, and function signatures.
+  type records plus dependency candidates derived from base classes, fields,
+  and function signatures.
+- `src/clang/analysis_projection.*` projects extracted data into
+  `AnalysisResult` for the currently supported module kinds.
 - `archscope_tests` links against `Catch2::Catch2WithMain`, and CTest
   registration uses `catch_discover_tests`.
 - It supports the standard compilation database entry shapes:
@@ -80,11 +84,12 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
 - The CLI requests metric computation through `MetricRegistry`, preserving user
   metric order in the emitted report.
 - The Clang extraction layer currently collects class/struct definitions,
-  definition file paths, qualified names, and outgoing dependency candidates
-  while excluding forward declarations and system-header types from the type
-  inventory.
+  definition file paths, namespace owners, qualified names, and outgoing
+  dependency candidates while excluding forward declarations and system-header
+  types from the type inventory.
+- `--module-filter` is applied after analysis when building the report model,
+  so metrics still reflect the full analyzed project graph.
 
 ## Next implementation steps
 
-The next increment adds namespace-module ownership plus `--module-filter`
-prefix matching while keeping full-project analysis deterministic.
+The next increment adds header-module ownership and header-path filtering.
