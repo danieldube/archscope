@@ -50,8 +50,9 @@ endif()
 
 add_library(
   archscope_core STATIC
-  src/core/analysis.cpp src/core/cli_text.cpp src/core/compilation_database.cpp
-  src/core/metrics.cpp src/core/report.cpp src/core/version.cpp)
+  src/core/analysis.cpp src/core/cli_text.cpp
+  src/core/compilation_database.cpp src/core/metrics.cpp src/core/report.cpp
+  src/core/version.cpp)
 add_library(ArchScope::core ALIAS archscope_core)
 
 add_library(archscope_clang STATIC src/clang/tool_runner.cpp)
@@ -62,8 +63,8 @@ target_compile_features(archscope_core PUBLIC cxx_std_17)
 archscope_set_common_warnings(archscope_core)
 
 target_include_directories(archscope_clang PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_include_directories(archscope_clang SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS}
-                                                          ${CLANG_INCLUDE_DIRS})
+target_include_directories(archscope_clang SYSTEM
+                           PRIVATE ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 target_link_libraries(archscope_clang PUBLIC ArchScope::core clangTooling)
 target_compile_features(archscope_clang PUBLIC cxx_std_17)
 archscope_set_common_warnings(archscope_clang)
@@ -96,29 +97,47 @@ if(BUILD_TESTING)
 
   set(ARCHSCOPE_EXPECTED_FILE
       "${PROJECT_SOURCE_DIR}/tests/system/expected/version.txt")
+  set(ARCHSCOPE_SYSTEM_EXPECTED_DIR
+      "${PROJECT_SOURCE_DIR}/tests/system/expected")
+  set(ARCHSCOPE_SYSTEM_SCRIPT_DIR "${PROJECT_SOURCE_DIR}/tests/system")
+  set(ARCHSCOPE_SYSTEM_REPORT_DIR "${PROJECT_BINARY_DIR}/tests/system")
+  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT_NAME
+      "check_translation_unit_instability_report.cmake")
+  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME
+      "translation-unit-instability-report.md")
+  set(ARCHSCOPE_VERSION_CHECK_SCRIPT
+      "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}/check_version.cmake")
+  set(ARCHSCOPE_PLACEHOLDER_CHECK_SCRIPT
+      "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}/check_placeholder_report.cmake")
+  set(ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT
+      "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT
+             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT_NAME}")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/placeholder_project")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE
       "${ARCHSCOPE_PLACEHOLDER_FIXTURE_DIR}/compile_commands.json")
   set(ARCHSCOPE_PLACEHOLDER_EXPECTED
-      "${PROJECT_SOURCE_DIR}/tests/system/expected/placeholder-report.md")
+      "${ARCHSCOPE_SYSTEM_EXPECTED_DIR}/placeholder-report.md")
   set(ARCHSCOPE_PLACEHOLDER_REPORT
-      "${PROJECT_BINARY_DIR}/tests/system/placeholder-report.md")
+      "${ARCHSCOPE_SYSTEM_REPORT_DIR}/placeholder-report.md")
+  set(ARCHSCOPE_DEPENDENCY_FIXTURE_DIR
+      "${PROJECT_SOURCE_DIR}/tests/fixtures/dependency_project")
   set(ARCHSCOPE_DEPENDENCY_FIXTURE
-      "${PROJECT_SOURCE_DIR}/tests/fixtures/dependency_project/"
-      "compile_commands.json")
-  set(ARCHSCOPE_DEPENDENCY_EXPECTED
-      "${PROJECT_SOURCE_DIR}/tests/system/expected/"
-      "translation-unit-instability-report.md")
-  set(ARCHSCOPE_DEPENDENCY_REPORT "${PROJECT_BINARY_DIR}/tests/system/"
-                                  "translation-unit-instability-report.md")
+      "${ARCHSCOPE_DEPENDENCY_FIXTURE_DIR}/compile_commands.json")
+  set(ARCHSCOPE_DEPENDENCY_EXPECTED "${ARCHSCOPE_SYSTEM_EXPECTED_DIR}")
+  cmake_path(APPEND ARCHSCOPE_DEPENDENCY_EXPECTED
+             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME}")
+  set(ARCHSCOPE_DEPENDENCY_REPORT "${ARCHSCOPE_SYSTEM_REPORT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_DEPENDENCY_REPORT
+             "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_REPORT_NAME}")
   catch_discover_tests(archscope_tests)
   add_test(
     NAME archscope_system_version
     COMMAND
       ${CMAKE_COMMAND} -DARCHSCOPE_BIN=$<TARGET_FILE:archscope>
       -DEXPECTED_FILE=${ARCHSCOPE_EXPECTED_FILE} -P
-      ${PROJECT_SOURCE_DIR}/tests/system/check_version.cmake)
+      ${ARCHSCOPE_VERSION_CHECK_SCRIPT})
   add_test(
     NAME archscope_system_placeholder_report
     COMMAND
@@ -126,14 +145,13 @@ if(BUILD_TESTING)
       -DFIXTURE_DB=${ARCHSCOPE_PLACEHOLDER_FIXTURE}
       -DEXPECTED_FILE=${ARCHSCOPE_PLACEHOLDER_EXPECTED}
       -DREPORT_OUTPUT=${ARCHSCOPE_PLACEHOLDER_REPORT} -P
-      ${PROJECT_SOURCE_DIR}/tests/system/check_placeholder_report.cmake)
+      ${ARCHSCOPE_PLACEHOLDER_CHECK_SCRIPT})
   add_test(
     NAME archscope_system_translation_unit_instability
     COMMAND
-      ${CMAKE_COMMAND} -DARCHSCOPE_BIN=$<TARGET_FILE:archscope>
-      -DFIXTURE_DB=${ARCHSCOPE_DEPENDENCY_FIXTURE}
-      -DEXPECTED_FILE=${ARCHSCOPE_DEPENDENCY_EXPECTED}
-      -DREPORT_OUTPUT=${ARCHSCOPE_DEPENDENCY_REPORT} -P
-      ${PROJECT_SOURCE_DIR}/tests/system/
-      check_translation_unit_instability_report.cmake)
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DFIXTURE_DB=${ARCHSCOPE_DEPENDENCY_FIXTURE}"
+      "-DEXPECTED_FILE=${ARCHSCOPE_DEPENDENCY_EXPECTED}"
+      "-DREPORT_OUTPUT=${ARCHSCOPE_DEPENDENCY_REPORT}" -P
+      "${ARCHSCOPE_TRANSLATION_UNIT_INSTABILITY_CHECK_SCRIPT}")
 endif()
