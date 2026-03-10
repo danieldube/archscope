@@ -21,8 +21,7 @@ TEST_CASE("distance from main sequence clamps floating arithmetic to [0, 1]",
           1.0);
 }
 
-TEST_CASE("distance from main sequence combines computed abstractness and "
-          "instability for a module",
+TEST_CASE("distance from main sequence uses module metrics",
           "[metrics][distance]") {
   using archscope::core::DependencyCandidate;
   using archscope::core::ModuleId;
