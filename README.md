@@ -36,8 +36,10 @@ pre-commit run --all-files
 
 The CLI now accepts a compilation database path, one or more metric ids, and
 `--module=translation_unit`, then writes a deterministic Markdown report.
-`abstractness` is computed from extracted class/struct definitions, while the
-other metrics remain placeholders for later roadmap increments. Under the hood,
+`abstractness`, `instability`, and `distance_from_main_sequence` are now wired
+through the metric registry and emitted in requested CLI order for
+translation-unit modules. The dependency graph is still empty at this stage, so
+`instability` defaults to `0.000` and distance currently reflects `|A-1|`. Under the hood,
 `archscope_clang` parses translation units with Clang LibTooling and enumerates
 user-defined class/struct definitions with qualified names, definition paths,
 and abstract/concrete classification.

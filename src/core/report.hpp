@@ -16,6 +16,10 @@ enum class MetricId : std::uint8_t {
 struct MetricValue {
   MetricId id;
   double value;
+
+  [[nodiscard]] bool operator==(const MetricValue &other) const {
+    return id == other.id && value == other.value;
+  }
 };
 
 struct ReportModule {

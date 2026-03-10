@@ -47,7 +47,7 @@ file(WRITE "${RUNTIME_COMPILE_DB}" "${RUNTIME_COMPILE_DB_CONTENT}")
 
 execute_process(
   COMMAND
-    "${ARCHSCOPE_BIN}" "${RUNTIME_COMPILE_DB}" abstractness
+    "${ARCHSCOPE_BIN}" "${RUNTIME_COMPILE_DB}" instability abstractness
     --module=translation_unit --project-name=placeholder_project
     "--report=${REPORT_OUTPUT}"
   RESULT_VARIABLE archscope_result

@@ -185,6 +185,7 @@ int run_cli(const std::vector<std::string> &args) {
 
   const auto analysis_result =
       build_translation_unit_analysis_result(extracted_types.value());
+  const auto metric_registry = archscope::core::MetricRegistry::with_defaults();
 
   archscope::core::ReportModel report{
       derive_project_name(*parsed),
@@ -192,15 +193,11 @@ int run_cli(const std::vector<std::string> &args) {
   };
 
   for (const std::string &path : database.value().translation_unit_paths()) {
-    archscope::core::ReportModule module{path, {}};
-    for (const auto metric : parsed->metrics) {
-      double value = 0.0;
-      if (metric == archscope::core::MetricId::abstractness) {
-        value = archscope::core::compute_abstractness(
-            analysis_result, archscope::core::ModuleId{path});
-      }
-      module.metrics.push_back({metric, value});
-    }
+    archscope::core::ReportModule module{
+        path,
+        metric_registry.compute(
+            analysis_result, archscope::core::ModuleId{path}, parsed->metrics),
+    };
     report.modules.push_back(module);
   }
 

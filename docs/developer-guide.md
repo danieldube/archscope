@@ -62,9 +62,8 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   `compile_commands.json`.
 - `src/core/report.*` owns the current report model and deterministic Markdown
   rendering.
-- `src/core/metrics.*` now provides the pure abstractness computation used by
-  unit tests; later increments will add classification, registry wiring, and
-  additional metrics on top of it.
+- `src/core/metrics.*` now provides `MetricRegistry` plus pure computations for
+  abstractness, instability, and distance from the main sequence.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
   type records, including whether each definition is abstract.
@@ -74,9 +73,8 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   `directory` + `file` + either `arguments` or `command`.
 - `CompilationDatabase::translation_unit_paths()` returns a sorted list so
   higher layers can stay deterministic.
-- The CLI computes translation-unit `abstractness` from extracted types.
-  `instability` and `distance_from_main_sequence` remain placeholder values
-  until later roadmap tasks wire those metrics in.
+- The CLI requests metric computation through `MetricRegistry`, preserving user
+  metric order in the emitted report.
 - The Clang extraction layer currently collects class/struct definitions,
   definition file paths, and qualified names while excluding forward
   declarations and system-header types.
