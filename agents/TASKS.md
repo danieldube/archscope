@@ -190,15 +190,15 @@ Resolve referenced decl location → owner module.
 
 ## Increment 7 — Header modules (ownership + filtering)
 
-### Task 7.1 — Tests first: header ownership rules
+### Task 7.1 — Tests first: header ownership rules [completed]
 - Unit tests for mapping a definition location to a header module.
 - Include a header-only class and a `.cpp`-defined class.
 
-### Task 7.2 — Implement header ownership
+### Task 7.2 — Implement header ownership [completed]
 - Owner = file of spelling location for the definition.
 - Ignore system headers.
 
-### Task 7.3 — Module-kind specific filtering
+### Task 7.3 — Module-kind specific filtering [completed]
 - Header filter is substring match on normalized path.
 
 **Acceptance**

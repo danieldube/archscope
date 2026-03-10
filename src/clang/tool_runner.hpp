@@ -27,15 +27,19 @@ struct ExtractedType {
 
 struct ExtractedDependency {
   std::string from_translation_unit_path;
+  std::string from_definition_path;
   std::string from_namespace_module;
   std::string target_translation_unit_path;
+  std::string target_definition_path;
   std::string target_namespace_module;
   bool is_system = false;
 
   [[nodiscard]] bool operator==(const ExtractedDependency &other) const {
     return from_translation_unit_path == other.from_translation_unit_path &&
+           from_definition_path == other.from_definition_path &&
            from_namespace_module == other.from_namespace_module &&
            target_translation_unit_path == other.target_translation_unit_path &&
+           target_definition_path == other.target_definition_path &&
            target_namespace_module == other.target_namespace_module &&
            is_system == other.is_system;
   }

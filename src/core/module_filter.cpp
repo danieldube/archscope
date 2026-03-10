@@ -1,5 +1,7 @@
 #include "core/module_filter.hpp"
 
+#include <filesystem>
+
 namespace archscope::core {
 
 namespace {
@@ -8,6 +10,10 @@ bool is_namespace_prefix_match(const std::string &module,
                                const std::string &filter) {
   return module == filter ||
          (module.size() > filter.size() && module.rfind(filter + "::", 0) == 0);
+}
+
+std::string normalize_path_string(const std::string &value) {
+  return std::filesystem::path(value).lexically_normal().generic_string();
 }
 
 } // namespace
@@ -24,7 +30,8 @@ bool matches_module_filter(const ModuleKind module_kind,
     return is_namespace_prefix_match(module, *filter);
   case ModuleKind::translation_unit:
   case ModuleKind::header:
-    return module.find(*filter) != std::string::npos;
+    return normalize_path_string(module).find(normalize_path_string(*filter)) !=
+           std::string::npos;
   }
 
   return false;

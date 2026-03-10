@@ -193,11 +193,6 @@ int run_cli(const std::vector<std::string> &args) {
     return 4;
   }
 
-  if (parsed->module_kind == archscope::core::ModuleKind::header) {
-    std::cerr << "error: --module=header is not supported in this increment\n";
-    return 2;
-  }
-
   const auto analysis_result = archscope::clang_backend::project_analysis(
       extracted_analysis.value(), parsed->module_kind);
   const auto metric_registry = archscope::core::MetricRegistry::with_defaults();

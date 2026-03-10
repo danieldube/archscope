@@ -1,5 +1,6 @@
 #include "clang/analysis_projection.hpp"
 
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -22,20 +23,29 @@ core::ModuleId select_module(const ExtractedType &type,
   throw std::invalid_argument("unsupported module kind");
 }
 
-core::DependencyCandidate
+std::optional<core::DependencyCandidate>
 select_dependency(const ExtractedDependency &dependency,
                   const core::ModuleKind module_kind) {
   switch (module_kind) {
   case core::ModuleKind::namespace_module:
-    return {core::ModuleId{dependency.from_namespace_module},
-            core::ModuleId{dependency.target_namespace_module},
-            dependency.is_system};
+    return core::DependencyCandidate{
+        core::ModuleId{dependency.from_namespace_module},
+        core::ModuleId{dependency.target_namespace_module},
+        dependency.is_system};
   case core::ModuleKind::translation_unit:
-    return {core::ModuleId{dependency.from_translation_unit_path},
-            core::ModuleId{dependency.target_translation_unit_path},
-            dependency.is_system};
+    if (dependency.from_translation_unit_path.empty() ||
+        dependency.target_translation_unit_path.empty()) {
+      return std::nullopt;
+    }
+    return core::DependencyCandidate{
+        core::ModuleId{dependency.from_translation_unit_path},
+        core::ModuleId{dependency.target_translation_unit_path},
+        dependency.is_system};
   case core::ModuleKind::header:
-    throw std::invalid_argument("header module projection is not implemented");
+    return core::DependencyCandidate{
+        core::ModuleId{dependency.from_definition_path},
+        core::ModuleId{dependency.target_definition_path},
+        dependency.is_system};
   }
 
   throw std::invalid_argument("unsupported module kind");
@@ -58,7 +68,10 @@ core::AnalysisResult project_analysis(const ExtractionResult &extraction,
   dependencies.reserve(extraction.dependencies.size());
 
   for (const auto &dependency : extraction.dependencies) {
-    dependencies.push_back(select_dependency(dependency, module_kind));
+    const auto projected = select_dependency(dependency, module_kind);
+    if (projected.has_value()) {
+      dependencies.push_back(*projected);
+    }
   }
 
   return core::assemble_analysis_result(

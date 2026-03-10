@@ -39,3 +39,15 @@ TEST_CASE("translation unit filter uses substring matching",
       ModuleKind::translation_unit, "src/domain/alpha.cpp",
       std::string{"service"}));
 }
+
+TEST_CASE("header filter uses substring matching on normalized paths",
+          "[module-filter]") {
+  using archscope::core::ModuleKind;
+
+  REQUIRE(archscope::core::matches_module_filter(
+      ModuleKind::header, "/workspace/project/include/domain/alpha.hpp",
+      std::string{"include/domain/../domain/alpha.hpp"}));
+  REQUIRE_FALSE(archscope::core::matches_module_filter(
+      ModuleKind::header, "/workspace/project/include/domain/alpha.hpp",
+      std::string{"include/domain/beta.hpp"}));
+}

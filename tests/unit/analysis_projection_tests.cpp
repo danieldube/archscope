@@ -22,8 +22,10 @@ TEST_CASE("analysis projection groups extracted data by namespace ownership",
           {"src/beta.cpp", "src/beta.cpp", "a::c", "a::c::Leaf", false},
       },
       {
-          {"src/alpha.cpp", "a::b", "src/beta.cpp", "a::c", false},
-          {"src/alpha.cpp", "a::b", "src/alpha.cpp", "a::b", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/beta.cpp",
+           "src/beta.cpp", "a::c", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/alpha.cpp",
+           "src/alpha.cpp", "a::b", false},
       },
   };
 
@@ -57,7 +59,8 @@ TEST_CASE("analysis projection preserves translation unit ownership",
           {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Alpha", false},
       },
       {
-          {"src/alpha.cpp", "a::b", "src/beta.cpp", "a::c", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/beta.cpp",
+           "src/beta.cpp", "a::c", false},
       },
   };
 
@@ -69,4 +72,64 @@ TEST_CASE("analysis projection preserves translation unit ownership",
   REQUIRE(analysis.graph.outgoing.at(ModuleId{"src/alpha.cpp"}) ==
           std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
               ModuleId{"src/beta.cpp"}});
+}
+
+TEST_CASE("analysis projection uses definition paths for header ownership",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+  using archscope::core::TypeId;
+  using archscope::core::TypeInfo;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "include/shared.hpp", "sample",
+           "sample::HeaderOnly", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "sample", "sample::LocalType",
+           false},
+      },
+      {},
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::header);
+
+  REQUIRE(analysis.modules ==
+          std::vector<ModuleId>{ModuleId{"include/shared.hpp"},
+                                ModuleId{"src/alpha.cpp"}});
+  REQUIRE(analysis.types == std::vector<TypeInfo>{
+                                {TypeId{"sample::HeaderOnly"},
+                                 ModuleId{"include/shared.hpp"}, false, true},
+                                {TypeId{"sample::LocalType"},
+                                 ModuleId{"src/alpha.cpp"}, false, true},
+                            });
+}
+
+TEST_CASE("analysis projection uses definition paths for header dependencies",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedDependency;
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "include/shared.hpp", "sample",
+           "sample::HeaderOnly", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "sample", "sample::LocalType",
+           false},
+      },
+      {
+          {"src/alpha.cpp", "src/alpha.cpp", "sample", "src/alpha.cpp",
+           "include/shared.hpp", "sample", false},
+      },
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::header);
+
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"src/alpha.cpp"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"include/shared.hpp"}});
 }

@@ -4,7 +4,8 @@ ArchScope is a C++17 command-line tool for computing architecture metrics over
 projects that provide a `compile_commands.json` database. The current codebase
 includes the bootstrap CLI, a tested compilation-database loader, a Clang
 LibTooling extraction layer for C++ type and dependency discovery, and a
-deterministic Markdown report flow for translation-unit and namespace modules.
+deterministic Markdown report flow for translation-unit, namespace, and header
+modules.
 
 ## Quick start
 
@@ -38,7 +39,7 @@ pre-commit run --all-files
 ## Current status
 
 The CLI now accepts a compilation database path, one or more metric ids, and
-`--module=translation_unit` or `--module=namespace`, then writes a
+`--module=translation_unit`, `--module=namespace`, or `--module=header`, then writes a
 deterministic Markdown report. `abstractness`, `instability`, and
 `distance_from_main_sequence` are wired through the metric registry and emitted
 in requested CLI order. `archscope_clang` parses translation units with Clang
@@ -46,8 +47,13 @@ LibTooling, enumerates user-defined class/struct definitions with qualified
 names, definition paths, namespace owners, and abstract/concrete
 classification, and extracts dependency candidates from base classes, fields,
 and function signatures. `--module-filter` now filters output modules without
-changing the full analysis pass; namespace filters use prefix matching. The
-next increment adds header-module ownership.
+changing the full analysis pass; namespace filters use prefix matching.
+Header ownership is now wired through the analysis path: header modules are
+owned by the definition spelling file, system headers are still excluded, and
+header-mode dependency edges use definition paths instead of translation-unit
+paths. Header filtering is now covered end to end as well: `--module=header`
+uses substring matching on normalized paths, so relative inputs with `..`
+segments still match the emitted absolute header-module paths.
 
 ## Repository layout
 

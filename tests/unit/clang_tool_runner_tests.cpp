@@ -217,10 +217,18 @@ TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
 
   REQUIRE(analysis.dependencies ==
           std::vector<archscope::clang_backend::ExtractedDependency>{
-              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
-              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
-              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
-              {"src/alpha.cpp", "<global>", "src/beta.cpp", "<global>", false},
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "<global>", false},
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "<global>", false},
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "<global>", false},
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "<global>", false},
           });
 }
 
@@ -250,4 +258,85 @@ TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
           std::vector<std::string>{"src/broken.cpp"});
   REQUIRE(extracted.error().message.find("failed to parse translation unit") !=
           std::string::npos);
+}
+
+TEST_CASE("clang tool runner captures header and source definition paths",
+          "[clang][extract]") {
+  TemporaryProject project("archscope-clang-tool-runner-header-ownership");
+
+  project.write_file("include/shared.hpp", "#pragma once\n"
+                                           "namespace sample {\n"
+                                           "struct HeaderOnly {};\n"
+                                           "}\n");
+  project.write_file("src/alpha.cpp", "#include \"../include/shared.hpp\"\n"
+                                      "namespace sample {\n"
+                                      "struct SourceDefined {};\n"
+                                      "}\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/alpha.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto types = extract_types(project);
+
+  REQUIRE(types == std::vector<archscope::clang_backend::ExtractedType>{
+                       {
+                           "src/alpha.cpp",
+                           (project.root() / "include/shared.hpp").string(),
+                           "sample",
+                           "sample::HeaderOnly",
+                           false,
+                       },
+                       {
+                           "src/alpha.cpp",
+                           (project.root() / "src/alpha.cpp").string(),
+                           "sample",
+                           "sample::SourceDefined",
+                           false,
+                       },
+                   });
+}
+
+TEST_CASE("clang tool runner records dependency definition paths for header "
+          "modules",
+          "[clang][extract]") {
+  TemporaryProject project("archscope-clang-tool-runner-header-dependencies");
+
+  project.write_file("include/shared.hpp", "#pragma once\n"
+                                           "namespace sample {\n"
+                                           "struct HeaderOnly {};\n"
+                                           "}\n");
+  project.write_file("src/alpha.cpp", "#include \"../include/shared.hpp\"\n"
+                                      "namespace sample {\n"
+                                      "struct SourceDefined {\n"
+                                      "  HeaderOnly member;\n"
+                                      "};\n"
+                                      "}\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/alpha.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto analysis = extract_analysis(project);
+
+  REQUIRE(analysis.dependencies ==
+          std::vector<archscope::clang_backend::ExtractedDependency>{
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "sample", "", (project.root() / "include/shared.hpp").string(),
+               "sample", false},
+          });
 }

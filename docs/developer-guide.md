@@ -87,9 +87,16 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   definition file paths, namespace owners, qualified names, and outgoing
   dependency candidates while excluding forward declarations and system-header
   types from the type inventory.
+- Header ownership is now implemented by carrying definition spelling paths
+  through both extracted types and dependencies, while translation-unit
+  projection skips only dependency targets that have no owning TU entry.
 - `--module-filter` is applied after analysis when building the report model,
   so metrics still reflect the full analyzed project graph.
+- Header filters normalize both the emitted module path and the filter text
+  with `std::filesystem::path::lexically_normal()` before performing substring
+  matching.
 
 ## Next implementation steps
 
-The next increment adds header-module ownership and header-path filtering.
+The next open increment adds parallel execution while keeping output fully
+deterministic.
