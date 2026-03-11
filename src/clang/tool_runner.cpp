@@ -29,12 +29,22 @@ namespace archscope::clang_backend {
 
 namespace {
 
+using clang::ASTContext;
+using clang::CXXRecordDecl;
+using clang::DiagnosticsEngine;
+using clang::FieldDecl;
+using clang::FunctionDecl;
+using clang::NamedDecl;
+using clang::ParmVarDecl;
+using clang::QualType;
+using clang::SourceManager;
+
 class CountingDiagConsumer : public clang::IgnoringDiagConsumer {
 public:
-  void HandleDiagnostic(clang::DiagnosticsEngine::Level level,
+  void HandleDiagnostic(DiagnosticsEngine::Level level,
                         const clang::Diagnostic &) override {
-    if (level == clang::DiagnosticsEngine::Error ||
-        level == clang::DiagnosticsEngine::Fatal) {
+    if (level == DiagnosticsEngine::Error ||
+        level == DiagnosticsEngine::Fatal) {
       ++error_count_;
     }
   }
@@ -146,12 +156,12 @@ private:
 using TranslationUnitPathMap = std::map<std::string, std::string>;
 
 std::optional<ExtractedDependency>
-make_dependency(const clang::SourceManager &source_manager,
+make_dependency(const SourceManager &source_manager,
                 const TranslationUnitPathMap &translation_unit_paths,
                 const std::string &translation_unit_path,
                 const std::string &from_definition_path,
                 const std::string &from_namespace_module,
-                const clang::NamedDecl *declaration) {
+                const NamedDecl *declaration) {
   if (declaration == nullptr) {
     return std::nullopt;
   }
@@ -196,7 +206,7 @@ make_dependency(const clang::SourceManager &source_manager,
 }
 
 void collect_dependencies_from_type(
-    clang::QualType type, clang::ASTContext &context,
+    QualType type, ASTContext &context,
     const TranslationUnitPathMap &translation_unit_paths,
     const std::string &translation_unit_path,
     const std::string &from_definition_path,
@@ -246,8 +256,8 @@ void collect_dependencies_from_type(
 
   const clang::QualType desugared = type.getDesugaredType(context);
   if (const auto *record = desugared->getAsCXXRecordDecl()) {
-    const clang::CXXRecordDecl *definition = record->getDefinition();
-    const clang::NamedDecl *target = record;
+    const CXXRecordDecl *definition = record->getDefinition();
+    const NamedDecl *target = record;
     if (definition != nullptr) {
       target = definition;
     }
@@ -263,7 +273,7 @@ void collect_dependencies_from_type(
 
 class AnalysisCollector : public clang::RecursiveASTVisitor<AnalysisCollector> {
 public:
-  AnalysisCollector(clang::ASTContext &context,
+  AnalysisCollector(ASTContext &context,
                     std::string translation_unit_path,
                     const TranslationUnitPathMap &translation_unit_paths,
                     ExtractionResult &result)
@@ -271,7 +281,7 @@ public:
         translation_unit_path_(std::move(translation_unit_path)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
-  bool VisitCXXRecordDecl(clang::CXXRecordDecl *record) {
+  bool VisitCXXRecordDecl(CXXRecordDecl *record) {
     if (!record->isThisDeclarationADefinition()) {
       return true;
     }
@@ -313,7 +323,7 @@ public:
                                      namespace_module, result_.dependencies);
     }
 
-    for (const clang::FieldDecl *field : record->fields()) {
+    for (const FieldDecl *field : record->fields()) {
       collect_dependencies_from_type(field->getType(), context_,
                                      translation_unit_paths_,
                                      translation_unit_path_, definition_path,
@@ -322,7 +332,7 @@ public:
     return true;
   }
 
-  bool VisitFunctionDecl(clang::FunctionDecl *function) {
+  bool VisitFunctionDecl(FunctionDecl *function) {
     if (function->isImplicit()) {
       return true;
     }
@@ -347,7 +357,7 @@ public:
                                    translation_unit_path_, definition_path,
                                    namespace_module, result_.dependencies);
 
-    for (const clang::ParmVarDecl *parameter : function->parameters()) {
+    for (const ParmVarDecl *parameter : function->parameters()) {
       collect_dependencies_from_type(parameter->getType(), context_,
                                      translation_unit_paths_,
                                      translation_unit_path_, definition_path,
@@ -358,7 +368,7 @@ public:
   }
 
 private:
-  clang::ASTContext &context_;
+  ASTContext &context_;
   std::string translation_unit_path_;
   const TranslationUnitPathMap &translation_unit_paths_;
   ExtractionResult &result_;
@@ -373,7 +383,7 @@ public:
       : translation_unit_path_(std::move(translation_unit_path)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
-  void HandleTranslationUnit(clang::ASTContext &context) override {
+  void HandleTranslationUnit(ASTContext &context) override {
     AnalysisCollector collector(context, translation_unit_path_,
                                 translation_unit_paths_, result_);
     collector.TraverseDecl(context.getTranslationUnitDecl());
