@@ -65,7 +65,7 @@ Canonical form:
 ```bash
 archscope <compile_commands.json> <metrics...> --module=<kind> \
   [--module-filter=<text>] [--report=<path>] [--project-name=<name>] \
-  [--threads=<n>]
+  [--threads=<n>] [--verbose]
 ```
 
 Supported metrics:
@@ -93,6 +93,10 @@ Exit codes:
 - `3`: compile database error
 - `4`: analysis error
 - `5`: internal error
+
+Error output is structured on stderr with a category, message, and contextual
+fields such as the failing path or translation unit. `--verbose` adds progress
+logs for database loading, analysis, projection, and report writing.
 
 ## Current status
 

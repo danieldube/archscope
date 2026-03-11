@@ -34,4 +34,5 @@ repos:
     rev: v1.3.5
     hooks:
       - id: clang-tidy
+        exclude: ^tests/fixtures/parse_failure_project/src/broken\.cpp$
         args: [ -p=build/compile_commands.json --config-file=.clang-tidy ]

@@ -254,13 +254,13 @@ Required ADRs (minimum):
 
 ## Increment 10 — Hardening: diagnostics, errors, and UX polish
 
-### Task 10.1 — Tests first: error cases
+### Task 10.1 — Tests first: error cases [completed]
 - System tests for:
   - missing compile db file (exit code 3)
   - clang parse failure (exit code 4)
   - invalid module kind (exit code 2)
 
-### Task 10.2 — Implement robust error reporting
+### Task 10.2 — Implement robust error reporting [completed]
 - Structured errors with context.
 - `--verbose` logs.
 

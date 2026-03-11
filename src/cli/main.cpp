@@ -10,28 +10,30 @@
 #include <algorithm>
 #include <exception>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
 
 namespace {
 
-unsigned default_thread_count() {
+unsigned DefaultThreadCount() {
   const unsigned detected = std::thread::hardware_concurrency();
   return detected == 0U ? 1U : detected;
 }
 
-unsigned clamp_thread_count(const unsigned requested) {
-  const unsigned maximum = default_thread_count();
+unsigned ClampThreadCount(const unsigned requested) {
+  const unsigned maximum = DefaultThreadCount();
   if (requested == 0U) {
     return 1U;
   }
   return std::min(requested, maximum);
 }
 
-std::optional<unsigned> parse_thread_count(const std::string &value) {
+std::optional<unsigned> ParseThreadCount(const std::string &value) {
   if (value.empty()) {
     return std::nullopt;
   }
@@ -48,7 +50,7 @@ std::optional<unsigned> parse_thread_count(const std::string &value) {
     return std::nullopt;
   }
 
-  return clamp_thread_count(static_cast<unsigned>(requested));
+  return ClampThreadCount(static_cast<unsigned>(requested));
 }
 
 struct CliOptions {
@@ -59,15 +61,21 @@ struct CliOptions {
   std::optional<std::string> module_filter;
   std::filesystem::path report_path = "architecture-metrics.md";
   std::optional<std::string> project_name_override;
-  unsigned threads = default_thread_count();
+  unsigned threads = DefaultThreadCount();
+  bool verbose = false;
 };
 
-bool is_option(const std::string &argument) {
+struct CliParseError {
+  std::string message;
+  std::vector<archscope::core::CliDetail> details;
+};
+
+bool IsOption(const std::string &argument) {
   return argument.rfind("--", 0) == 0;
 }
 
 std::optional<archscope::core::MetricId>
-parse_metric_id(const std::string &value) {
+ParseMetricId(const std::string &value) {
   if (value == "abstractness") {
     return archscope::core::MetricId::abstractness;
   }
@@ -81,7 +89,7 @@ parse_metric_id(const std::string &value) {
 }
 
 std::optional<archscope::core::ModuleKind>
-parse_module_kind(const std::string &value) {
+ParseModuleKind(const std::string &value) {
   if (value == "translation_unit") {
     return archscope::core::ModuleKind::translation_unit;
   }
@@ -94,10 +102,10 @@ parse_module_kind(const std::string &value) {
   return std::nullopt;
 }
 
-std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
-                                    std::string &error_message) {
+std::optional<CliOptions> ParseCli(const std::vector<std::string> &args,
+                                   CliParseError &error) {
   if (args.empty() || (args.size() == 1U && args.front() == "--help")) {
-    std::cout << archscope::core::help_text();
+    std::cout << archscope::core::HelpText();
     return std::nullopt;
   }
 
@@ -107,7 +115,7 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
   }
 
   if (args.size() < 3U) {
-    error_message = "expected a compile_commands.json path, at least one "
+    error.message = "expected a compile_commands.json path, at least one "
                     "metric, and --module=<kind>";
     return std::nullopt;
   }
@@ -118,20 +126,21 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
   std::size_t index = 1U;
   for (; index < args.size(); ++index) {
     const std::string &argument = args[index];
-    if (is_option(argument)) {
+    if (IsOption(argument)) {
       break;
     }
 
-    const auto metric = parse_metric_id(argument);
+    const auto metric = ParseMetricId(argument);
     if (!metric.has_value()) {
-      error_message = "unsupported metric: " + argument;
+      error.message = "unsupported metric";
+      error.details = {{"metric", argument}};
       return std::nullopt;
     }
     options.metrics.push_back(*metric);
   }
 
   if (options.metrics.empty()) {
-    error_message = "at least one metric is required";
+    error.message = "at least one metric is required";
     return std::nullopt;
   }
 
@@ -139,9 +148,10 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
     const std::string &argument = args[index];
     if (argument.rfind("--module=", 0) == 0) {
       const auto module_kind =
-          parse_module_kind(argument.substr(std::string("--module=").size()));
+          ParseModuleKind(argument.substr(std::string("--module=").size()));
       if (!module_kind.has_value()) {
-        error_message = "unsupported module kind";
+        error.message = "unsupported module kind";
+        error.details = {{"option", argument}};
         return std::nullopt;
       }
       options.module_kind = *module_kind;
@@ -163,30 +173,37 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
     }
     if (argument.rfind("--threads=", 0) == 0) {
       const auto threads =
-          parse_thread_count(argument.substr(std::string("--threads=").size()));
+          ParseThreadCount(argument.substr(std::string("--threads=").size()));
       if (!threads.has_value()) {
-        error_message = "invalid thread count";
+        error.message = "invalid thread count";
+        error.details = {{"option", argument}};
         return std::nullopt;
       }
       options.threads = *threads;
       continue;
     }
+    if (argument == "--verbose") {
+      options.verbose = true;
+      continue;
+    }
 
-    error_message = "unsupported option: " + argument;
+    error.message = "unsupported option";
+    error.details = {{"option", argument}};
     return std::nullopt;
   }
 
   if (std::none_of(args.begin(), args.end(), [](const std::string &argument) {
         return argument.rfind("--module=", 0) == 0;
       })) {
-    error_message = "missing required option: --module=<kind>";
+    error.message = "missing required option";
+    error.details = {{"option", "--module=<kind>"}};
     return std::nullopt;
   }
 
   return options;
 }
 
-std::string derive_project_name(const CliOptions &options) {
+std::string DeriveProjectName(const CliOptions &options) {
   if (options.project_name_override.has_value() &&
       !options.project_name_override->empty()) {
     return *options.project_name_override;
@@ -205,45 +222,92 @@ std::string derive_project_name(const CliOptions &options) {
   return name;
 }
 
-int run_cli(const std::vector<std::string> &args) {
-  std::string error_message;
-  const auto parsed = parse_cli(args, error_message);
+std::string ModuleKindName(const archscope::core::ModuleKind module_kind) {
+  switch (module_kind) {
+  case archscope::core::ModuleKind::namespace_module:
+    return "namespace";
+  case archscope::core::ModuleKind::translation_unit:
+    return "translation_unit";
+  case archscope::core::ModuleKind::header:
+    return "header";
+  }
+
+  return "unknown";
+}
+
+std::string CountLabel(const std::size_t count, const char *singular,
+                       const char *plural) {
+  std::ostringstream stream;
+  stream << count << ' ' << (count == 1U ? singular : plural);
+  return stream.str();
+}
+
+void WriteInfoLog(const bool verbose, const std::string &message) {
+  if (!verbose) {
+    return;
+  }
+  std::cerr << archscope::core::FormatInfoText(message);
+}
+
+int RunCli(const std::vector<std::string> &args) {
+  CliParseError parse_error;
+  const auto parsed = ParseCli(args, parse_error);
   if (!parsed.has_value()) {
-    if (error_message.empty()) {
+    if (parse_error.message.empty()) {
       return 0;
     }
 
-    std::cerr << "error: " << error_message << "\n\n"
-              << archscope::core::help_text();
+    std::cerr << archscope::core::FormatErrorText(
+                     "usage error", parse_error.message, parse_error.details)
+              << '\n'
+              << archscope::core::HelpText();
     return 2;
   }
 
+  WriteInfoLog(parsed->verbose, "loading compilation database from " +
+                                    parsed->compile_commands_path.string());
   const auto database =
       archscope::core::load_compilation_database(parsed->compile_commands_path);
   if (!database.has_value()) {
-    std::cerr << "error: " << database.error().message << ": "
-              << database.error().context << '\n';
+    std::cerr << archscope::core::FormatErrorText(
+        "compilation database error", database.error().message,
+        {{"path", database.error().context}});
     return 3;
   }
 
+  WriteInfoLog(parsed->verbose,
+               "loaded " + CountLabel(database.value().entries.size(),
+                                      "compilation database entry",
+                                      "compilation database entries"));
+  WriteInfoLog(parsed->verbose,
+               "analyzing " +
+                   CountLabel(database.value().entries.size(),
+                              "translation unit", "translation units") +
+                   " with " + std::to_string(parsed->threads) + " thread(s)");
   const auto extracted_analysis = archscope::clang_backend::extract_analysis(
       database.value(), parsed->threads);
   if (!extracted_analysis.has_value()) {
-    std::cerr << "error: " << extracted_analysis.error().message;
-    if (!extracted_analysis.error().failed_translation_units.empty()) {
-      std::cerr << ": "
-                << extracted_analysis.error().failed_translation_units.front();
+    std::vector<archscope::core::CliDetail> details;
+    for (const std::string &failed_translation_unit :
+         extracted_analysis.error().failed_translation_units) {
+      details.emplace_back("translation unit", failed_translation_unit);
     }
-    std::cerr << '\n';
+    std::cerr << archscope::core::FormatErrorText(
+        "analysis error", extracted_analysis.error().message, details);
     return 4;
   }
 
   const auto analysis_result = archscope::clang_backend::project_analysis(
       extracted_analysis.value(), parsed->module_kind);
+  WriteInfoLog(
+      parsed->verbose,
+      "projected analysis into " +
+          CountLabel(analysis_result.modules.size(), "module", "modules") +
+          " using " + ModuleKindName(parsed->module_kind) + " ownership");
   const auto metric_registry = archscope::core::MetricRegistry::with_defaults();
 
   archscope::core::ReportModel report{
-      derive_project_name(*parsed),
+      DeriveProjectName(*parsed),
       {},
   };
 
@@ -260,11 +324,17 @@ int run_cli(const std::vector<std::string> &args) {
   }
 
   const std::string markdown = archscope::core::to_markdown(report);
+  WriteInfoLog(parsed->verbose,
+               "writing Markdown report to " + parsed->report_path.string());
+  std::string error_message;
   if (!archscope::core::write_report_file(parsed->report_path, markdown,
                                           error_message)) {
-    std::cerr << "error: " << error_message << '\n';
+    std::cerr << archscope::core::FormatErrorText(
+        "internal error", error_message,
+        {{"report", parsed->report_path.string()}});
     return 5;
   }
+  WriteInfoLog(parsed->verbose, "report written successfully");
 
   return 0;
 }
@@ -278,12 +348,14 @@ int main(int argc, char **argv) {
     for (int index = 1; index < argc; ++index) {
       args.emplace_back(argv[index]);
     }
-    return run_cli(args);
+    return RunCli(args);
   } catch (const std::exception &error) {
-    std::cerr << "internal error: " << error.what() << '\n';
+    std::cerr << archscope::core::FormatErrorText("internal error",
+                                                  error.what());
     return 5;
   } catch (...) {
-    std::cerr << "internal error: unexpected exception\n";
+    std::cerr << archscope::core::FormatErrorText("internal error",
+                                                  "unexpected exception");
     return 5;
   }
 }

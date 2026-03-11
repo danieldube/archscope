@@ -122,6 +122,11 @@ if(BUILD_TESTING)
       "check_header_filter_report.cmake")
   set(ARCHSCOPE_PARALLEL_DETERMINISM_CHECK_SCRIPT_NAME
       "check_parallel_determinism.cmake")
+  set(ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT_NAME "check_error_case.cmake")
+  set(ARCHSCOPE_VERBOSE_LOGGING_CHECK_SCRIPT_NAME
+      "check_verbose_logging.cmake")
+  set(ARCHSCOPE_INTERNAL_ERROR_CHECK_SCRIPT_NAME
+      "check_internal_error_case.cmake")
   set(ARCHSCOPE_TRANSLATION_UNIT_DISTANCE_REPORT_NAME
       "translation-unit-distance-report.md")
   set(ARCHSCOPE_NAMESPACE_FILTER_REPORT_NAME "namespace-filter-report.md")
@@ -145,6 +150,15 @@ if(BUILD_TESTING)
       "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
   cmake_path(APPEND ARCHSCOPE_PARALLEL_DETERMINISM_CHECK_SCRIPT
              "${ARCHSCOPE_PARALLEL_DETERMINISM_CHECK_SCRIPT_NAME}")
+  set(ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT
+             "${ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT_NAME}")
+  set(ARCHSCOPE_VERBOSE_LOGGING_CHECK_SCRIPT "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_VERBOSE_LOGGING_CHECK_SCRIPT
+             "${ARCHSCOPE_VERBOSE_LOGGING_CHECK_SCRIPT_NAME}")
+  set(ARCHSCOPE_INTERNAL_ERROR_CHECK_SCRIPT "${ARCHSCOPE_SYSTEM_SCRIPT_DIR}")
+  cmake_path(APPEND ARCHSCOPE_INTERNAL_ERROR_CHECK_SCRIPT
+             "${ARCHSCOPE_INTERNAL_ERROR_CHECK_SCRIPT_NAME}")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/placeholder_project")
   set(ARCHSCOPE_PLACEHOLDER_FIXTURE
@@ -153,6 +167,8 @@ if(BUILD_TESTING)
       "${ARCHSCOPE_SYSTEM_EXPECTED_DIR}/placeholder-report.md")
   set(ARCHSCOPE_PLACEHOLDER_REPORT
       "${ARCHSCOPE_SYSTEM_REPORT_DIR}/placeholder-report.md")
+  set(ARCHSCOPE_INVALID_REPORT_OUTPUT
+      "${ARCHSCOPE_PLACEHOLDER_FIXTURE}/report.md")
   set(ARCHSCOPE_DEPENDENCY_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/dependency_project")
   set(ARCHSCOPE_DEPENDENCY_FIXTURE
@@ -170,6 +186,12 @@ if(BUILD_TESTING)
       "${PROJECT_SOURCE_DIR}/tests/fixtures/parallel_project")
   set(ARCHSCOPE_PARALLEL_FIXTURE
       "${ARCHSCOPE_PARALLEL_FIXTURE_DIR}/compile_commands.json")
+  set(ARCHSCOPE_PARSE_FAILURE_FIXTURE_DIR
+      "${PROJECT_SOURCE_DIR}/tests/fixtures/parse_failure_project")
+  set(ARCHSCOPE_PARSE_FAILURE_FIXTURE
+      "${ARCHSCOPE_PARSE_FAILURE_FIXTURE_DIR}/compile_commands.json")
+  set(ARCHSCOPE_MISSING_COMPILE_DB
+      "${PROJECT_BINARY_DIR}/tests/system/missing-compile_commands.json")
   set(ARCHSCOPE_NAMESPACE_FIXTURE_DIR
       "${PROJECT_SOURCE_DIR}/tests/fixtures/namespace_project")
   set(ARCHSCOPE_NAMESPACE_FIXTURE
@@ -236,4 +258,51 @@ if(BUILD_TESTING)
       "-DFIXTURE_DB=${ARCHSCOPE_PARALLEL_FIXTURE}"
       "-DREPORT_OUTPUT_DIR=${ARCHSCOPE_PARALLEL_REPORT_DIR}" -P
       "${ARCHSCOPE_PARALLEL_DETERMINISM_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_missing_compile_database
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DCOMPILE_DB=${ARCHSCOPE_MISSING_COMPILE_DB}"
+      "-DMETRIC_ID=abstractness" "-DMODULE_ARG=--module=translation_unit"
+      "-DEXPECTED_EXIT=3"
+      "-DEXPECTED_ERROR_SUBSTRING=error: compilation database error"
+      "-DEXPECTED_ERROR_SUBSTRING_2=message: missing "
+      "compile_commands.json file" "-DEXPECTED_ERROR_SUBSTRING_3=path: "
+      "${ARCHSCOPE_MISSING_COMPILE_DB}" -P
+      "${ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_parse_failure
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DCOMPILE_DB=${ARCHSCOPE_PARSE_FAILURE_FIXTURE}"
+      "-DMETRIC_ID=abstractness" "-DMODULE_ARG=--module=translation_unit"
+      "-DEXPECTED_EXIT=4" "-DEXPECTED_ERROR_SUBSTRING=error: analysis error"
+      "-DEXPECTED_ERROR_SUBSTRING_2=message: failed to parse translation unit"
+      "-DEXPECTED_ERROR_SUBSTRING_3=translation unit: src/broken.cpp" -P
+      "${ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_invalid_module_kind
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DCOMPILE_DB=${ARCHSCOPE_PLACEHOLDER_FIXTURE}"
+      "-DMETRIC_ID=abstractness" "-DMODULE_ARG=--module=not_a_module"
+      "-DEXPECTED_EXIT=2" "-DEXPECTED_ERROR_SUBSTRING=error: usage error"
+      "-DEXPECTED_ERROR_SUBSTRING_2=message: unsupported module kind"
+      "-DEXPECTED_ERROR_SUBSTRING_3=option: --module=not_a_module" -P
+      "${ARCHSCOPE_ERROR_CASE_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_verbose_logging
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DFIXTURE_DB=${ARCHSCOPE_PLACEHOLDER_FIXTURE}"
+      "-DEXPECTED_FILE=${ARCHSCOPE_PLACEHOLDER_EXPECTED}"
+      "-DREPORT_OUTPUT=${ARCHSCOPE_PLACEHOLDER_REPORT}" -P
+      "${ARCHSCOPE_VERBOSE_LOGGING_CHECK_SCRIPT}")
+  add_test(
+    NAME archscope_system_internal_report_write_failure
+    COMMAND
+      ${CMAKE_COMMAND} "-DARCHSCOPE_BIN=$<TARGET_FILE:archscope>"
+      "-DFIXTURE_DB=${ARCHSCOPE_PLACEHOLDER_FIXTURE}"
+      "-DREPORT_OUTPUT=${ARCHSCOPE_INVALID_REPORT_OUTPUT}" -P
+      "${ARCHSCOPE_INTERNAL_ERROR_CHECK_SCRIPT}")
 endif()

@@ -14,7 +14,7 @@ writes a deterministic Markdown report.
 `archscope --version`
 : Print the executable version string.
 
-`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>]`
+`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>] [--verbose]`
 : Load the compilation database, group results by translation unit, namespace,
   or header definition file, optionally filter the emitted module list, and
   write a Markdown report with metric values in the exact order requested on
@@ -39,6 +39,7 @@ Metrics are emitted in the same order they are requested on the CLI.
 - `--project-name=<name>`: optional report header override
 - `--threads=<n>`: optional parallelism request; values are clamped into the
   valid runtime range
+- `--verbose`: emit progress logs and extended error context on stderr
 - `--help`: print usage and exit
 - `--version`: print version and exit
 
@@ -130,10 +131,21 @@ reports.
 
 ## Troubleshooting
 
-- `error: missing required option: --module=<kind>`
+Structured errors are emitted on stderr in this form:
+
+```text
+error: <category>
+  message: <message>
+  <context-label>: <context-value>
+```
+
+Use `--verbose` to add progress logs before a failure, or to confirm which
+analysis stage the command is currently executing.
+
+- `error: usage error` with `option: --module=<kind>`
   Provide `--module=translation_unit`, `--module=namespace`, or
   `--module=header`.
-- `error: unsupported metric: <name>`
+- `error: usage error` with `metric: <name>`
   Use one or more of `abstractness`, `instability`, and
   `distance_from_main_sequence`.
 - Exit code `3`
@@ -144,6 +156,11 @@ reports.
   Clang failed to parse at least one translation unit. Rebuild the target
   project’s compile database and confirm the listed source file still compiles
   with the recorded arguments.
+- Exit code `5`
+  ArchScope hit an internal failure while writing the report or handling an
+  unexpected exception. Check the structured `report:` context line first to
+  confirm the output path is writable and that none of its parent components is
+  an existing regular file.
 - No modules in the report
   Check whether `--module-filter` excluded every emitted module. Filtering is
   applied after analysis, so the filter only affects report output.

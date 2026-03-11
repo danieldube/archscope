@@ -1,0 +1,11 @@
+[
+  {
+    "directory": ".",
+    "file": "src/broken.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/broken.cpp"
+    ]
+  }
+]
