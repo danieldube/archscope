@@ -53,7 +53,8 @@ Run a deterministic multi-metric report in parallel:
 
 ```bash
 ./build/archscope tests/fixtures/parallel_project/compile_commands.json \
-  abstractness instability distance_from_main_sequence \
+  abstractness instability abstract_type_count concrete_type_count \
+  type_count distance_from_main_sequence \
   --module=translation_unit --threads=4 \
   --report=/tmp/archscope-deterministic-report.md
 ```
@@ -72,6 +73,9 @@ Supported metrics:
 
 - `abstractness`
 - `instability`
+- `abstract_type_count`
+- `concrete_type_count`
+- `type_count`
 - `distance_from_main_sequence`
 
 Supported module kinds:
@@ -102,8 +106,10 @@ logs for database loading, analysis, projection, and report writing.
 
 The CLI accepts a compilation database path, one or more metric ids, and a
 required module kind, then writes a deterministic Markdown report.
-`abstractness`, `instability`, and `distance_from_main_sequence` are wired
-through the metric registry and emitted in requested CLI order.
+`abstractness`, `instability`, `abstract_type_count`,
+`concrete_type_count`, `type_count`, and
+`distance_from_main_sequence` are wired through the metric registry and
+emitted in requested CLI order.
 `archscope_clang` parses translation units with Clang LibTooling, enumerates
 user-defined class/struct definitions with qualified names, definition paths,
 namespace owners, and abstract/concrete classification, and extracts

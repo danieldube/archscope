@@ -1,6 +1,7 @@
 #include "core/report.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -14,6 +15,12 @@ std::string metric_display_name(const MetricId metric_id) {
     return "Abstractness";
   case MetricId::instability:
     return "Instability";
+  case MetricId::abstract_type_count:
+    return "Abstract Types";
+  case MetricId::concrete_type_count:
+    return "Concrete Types";
+  case MetricId::type_count:
+    return "Types";
   case MetricId::distance_from_main_sequence:
     return "Distance from the Main Sequence";
   }
@@ -23,9 +30,20 @@ std::string metric_display_name(const MetricId metric_id) {
 
 namespace {
 
-std::string format_metric_value(const double value) {
+bool IsCountMetric(const MetricId metric_id) {
+  return metric_id == MetricId::abstract_type_count ||
+         metric_id == MetricId::concrete_type_count ||
+         metric_id == MetricId::type_count;
+}
+
+std::string FormatMetricValue(const MetricValue &metric) {
   std::ostringstream stream;
-  stream << std::fixed << std::setprecision(3) << value;
+  if (IsCountMetric(metric.id)) {
+    stream << static_cast<std::uint64_t>(metric.value);
+    return stream.str();
+  }
+
+  stream << std::fixed << std::setprecision(3) << metric.value;
   return stream.str();
 }
 
@@ -46,7 +64,7 @@ std::string to_markdown(const ReportModel &model) {
     output << module.name << ":\n";
     for (const MetricValue &metric : module.metrics) {
       output << " * " << metric_display_name(metric.id) << ": "
-             << format_metric_value(metric.value) << '\n';
+             << FormatMetricValue(metric) << '\n';
     }
     if (index + 1U < sorted_modules.size()) {
       output << '\n';

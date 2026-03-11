@@ -25,15 +25,22 @@ TEST_CASE("metric registry returns metrics in requested order",
   const auto metrics = archscope::core::MetricRegistry::with_defaults().compute(
       analysis, ModuleId{"src/module.cpp"},
       {MetricId::instability, MetricId::abstractness,
-       MetricId::distance_from_main_sequence});
+       MetricId::abstract_type_count, MetricId::concrete_type_count,
+       MetricId::type_count, MetricId::distance_from_main_sequence});
 
-  REQUIRE(metrics.size() == 3U);
+  REQUIRE(metrics.size() == 6U);
   REQUIRE(metrics[0].id == MetricId::instability);
   REQUIRE(metrics[0].value == 0.0);
   REQUIRE(metrics[1].id == MetricId::abstractness);
   REQUIRE(metrics[1].value == 0.5);
-  REQUIRE(metrics[2].id == MetricId::distance_from_main_sequence);
-  REQUIRE(metrics[2].value == 0.5);
+  REQUIRE(metrics[2].id == MetricId::abstract_type_count);
+  REQUIRE(metrics[2].value == 1.0);
+  REQUIRE(metrics[3].id == MetricId::concrete_type_count);
+  REQUIRE(metrics[3].value == 1.0);
+  REQUIRE(metrics[4].id == MetricId::type_count);
+  REQUIRE(metrics[4].value == 2.0);
+  REQUIRE(metrics[5].id == MetricId::distance_from_main_sequence);
+  REQUIRE(metrics[5].value == 0.5);
 }
 
 TEST_CASE("metric registry computes abstractness for empty module",

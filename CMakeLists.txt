@@ -98,6 +98,7 @@ if(BUILD_TESTING)
     tests/unit/namespace_module_resolver_tests.cpp
     tests/unit/parallel_executor_tests.cpp
     tests/unit/report_writer_tests.cpp
+    tests/unit/type_count_metric_tests.cpp
     tests/unit/version_tests.cpp)
   target_include_directories(archscope_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
   target_include_directories(

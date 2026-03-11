@@ -24,6 +24,9 @@ writes a deterministic Markdown report.
 
 - `abstractness`
 - `instability`
+- `abstract_type_count`
+- `concrete_type_count`
+- `type_count`
 - `distance_from_main_sequence`
 
 Metrics are emitted in the same order they are requested on the CLI.
@@ -84,7 +87,8 @@ Translation-unit report with explicit thread count:
 
 ```bash
 ./build/archscope tests/fixtures/parallel_project/compile_commands.json \
-  abstractness instability distance_from_main_sequence \
+  abstractness instability abstract_type_count concrete_type_count \
+  type_count distance_from_main_sequence \
   --module=translation_unit --threads=4 \
   --report=/tmp/parallel-report.md
 ```
@@ -103,6 +107,9 @@ Minimum report structure:
 **project-name**
 
 module-id:
+ * Abstract Types: 2
+ * Concrete Types: 1
+ * Types: 3
  * Abstractness: 0.500
  * Instability: 0.250
  * Distance from the Main Sequence: 0.250
@@ -113,15 +120,18 @@ module-id:
 The current translation-unit distance fixture produces:
 
 - `src/alpha.cpp` with `Abstractness: 0.667`, `Instability: 1.000`, and
+  `Abstract Types: 2`, `Concrete Types: 1`, `Types: 3`, and
   `Distance from the Main Sequence: 0.667`
-- `src/beta.cpp` with `Abstractness: 1.000`, `Instability: 0.000`, and
+- `src/beta.cpp` with `Abstractness: 1.000`, `Instability: 0.000`,
+  `Abstract Types: 1`, `Concrete Types: 0`, `Types: 1`, and
   `Distance from the Main Sequence: 0.000`
 
 You can run that fixture directly from the repository root:
 
 ```bash
 ./build/archscope tests/fixtures/dependency_project/compile_commands.json \
-  abstractness instability distance_from_main_sequence \
+  abstractness instability abstract_type_count concrete_type_count \
+  type_count distance_from_main_sequence \
   --module=translation_unit --report=/tmp/distance-report.md
 ```
 
@@ -146,7 +156,8 @@ analysis stage the command is currently executing.
   Provide `--module=translation_unit`, `--module=namespace`, or
   `--module=header`.
 - `error: usage error` with `metric: <name>`
-  Use one or more of `abstractness`, `instability`, and
+  Use one or more of `abstractness`, `instability`, `abstract_type_count`,
+  `concrete_type_count`, `type_count`, and
   `distance_from_main_sequence`.
 - Exit code `3`
   The compilation database could not be read or parsed. Verify the path points

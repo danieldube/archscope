@@ -81,7 +81,8 @@ observe stale binaries.
 - `src/core/report.*` owns the report model and deterministic Markdown
   rendering.
 - `src/core/metrics.*` provides `MetricRegistry` plus pure computations for
-  abstractness, instability, and distance from the main sequence.
+  abstractness, instability, abstract/concrete/total type counts, and
+  distance from the main sequence.
 - `src/core/module_filter.*` owns module-name matching rules so report
   filtering stays independent from Clang traversal and metric computation.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
@@ -111,7 +112,8 @@ observe stale binaries.
 1. Add unit coverage in `tests/unit/` for the pure metric behavior and edge
    cases.
 2. Extend `src/core/metrics.hpp` and `src/core/metrics.cpp` with the new
-   `MetricId`, display name, and computation function.
+   `MetricId`, display name, computation function, and any metric-specific
+   report formatting rules.
 3. Register the metric in `MetricRegistry::with_defaults()` so the CLI can
    resolve it in request order.
 4. Update or add a system test fixture if end-to-end report output changes.

@@ -82,6 +82,15 @@ ParseMetricId(const std::string &value) {
   if (value == "instability") {
     return archscope::core::MetricId::instability;
   }
+  if (value == "abstract_type_count") {
+    return archscope::core::MetricId::abstract_type_count;
+  }
+  if (value == "concrete_type_count") {
+    return archscope::core::MetricId::concrete_type_count;
+  }
+  if (value == "type_count") {
+    return archscope::core::MetricId::type_count;
+  }
   if (value == "distance_from_main_sequence") {
     return archscope::core::MetricId::distance_from_main_sequence;
   }

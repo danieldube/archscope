@@ -49,6 +49,9 @@ TEST_CASE("report writer formats all placeholder metrics with fixed precision",
           archscope::core::ReportModule{
               "src/main.cpp",
               {
+                  {archscope::core::MetricId::abstract_type_count, 2.0},
+                  {archscope::core::MetricId::concrete_type_count, 0.0},
+                  {archscope::core::MetricId::type_count, 2.0},
                   {archscope::core::MetricId::abstractness, 0.0},
                   {archscope::core::MetricId::distance_from_main_sequence, 1.0},
               },
@@ -58,6 +61,9 @@ TEST_CASE("report writer formats all placeholder metrics with fixed precision",
 
   const std::string markdown = archscope::core::to_markdown(model);
 
+  REQUIRE(markdown.find(" * Abstract Types: 2\n") != std::string::npos);
+  REQUIRE(markdown.find(" * Concrete Types: 0\n") != std::string::npos);
+  REQUIRE(markdown.find(" * Types: 2\n") != std::string::npos);
   REQUIRE(markdown.find(" * Abstractness: 0.000\n") != std::string::npos);
   REQUIRE(markdown.find(" * Distance from the Main Sequence: 1.000\n") !=
           std::string::npos);

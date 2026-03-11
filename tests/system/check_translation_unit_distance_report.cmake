@@ -17,6 +17,7 @@ endif()
 execute_process(
   COMMAND
     "${ARCHSCOPE_BIN}" "${FIXTURE_DB}" abstractness instability
+    abstract_type_count concrete_type_count type_count
     distance_from_main_sequence --module=translation_unit
     --project-name=dependency_fixture "--report=${REPORT_OUTPUT}"
   RESULT_VARIABLE archscope_result

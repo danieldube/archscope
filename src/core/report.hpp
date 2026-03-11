@@ -10,6 +10,9 @@ namespace archscope::core {
 enum class MetricId : std::uint8_t {
   abstractness,
   instability,
+  abstract_type_count,
+  concrete_type_count,
+  type_count,
   distance_from_main_sequence,
 };
 

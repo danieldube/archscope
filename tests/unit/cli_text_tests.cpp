@@ -18,6 +18,9 @@ TEST_CASE("help text documents the supported bootstrap options",
   REQUIRE(help.find("header") != std::string::npos);
   REQUIRE(help.find("--module-filter=<text>") != std::string::npos);
   REQUIRE(help.find("abstractness") != std::string::npos);
+  REQUIRE(help.find("abstract_type_count") != std::string::npos);
+  REQUIRE(help.find("concrete_type_count") != std::string::npos);
+  REQUIRE(help.find("type_count") != std::string::npos);
 }
 
 TEST_CASE("cli error text includes category, message, and context details",

@@ -11,6 +11,7 @@ std::string HelpText() {
          "       archscope [--help] [--version]\n"
          "\n"
          "Supported metric ids: abstractness, instability, "
+         "abstract_type_count, concrete_type_count, type_count, "
          "distance_from_main_sequence\n"
          "\n"
          "Options:\n"

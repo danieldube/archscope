@@ -12,6 +12,12 @@ double compute_abstractness(const AnalysisResult &analysis,
                             const ModuleId &module);
 double compute_instability(const AnalysisResult &analysis,
                            const ModuleId &module);
+double compute_abstract_type_count(const AnalysisResult &analysis,
+                                   const ModuleId &module);
+double compute_concrete_type_count(const AnalysisResult &analysis,
+                                   const ModuleId &module);
+double compute_type_count(const AnalysisResult &analysis,
+                          const ModuleId &module);
 double compute_distance_from_main_sequence(double abstractness,
                                            double instability);
 double compute_distance_from_main_sequence(const AnalysisResult &analysis,
