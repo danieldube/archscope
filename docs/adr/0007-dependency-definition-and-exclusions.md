@@ -20,6 +20,11 @@ of these AST constructs:
 - function parameter types
 - template type arguments reachable through those types
 
+Apply these ownership rules:
+
+- Class-level metadata is recorded for each extracted dependency (`from_qualified_type` and `target_qualified_type`).
+- Function-signature dependencies are collected only for class/struct methods; free-function dependencies are excluded so class ownership stays explicit and deterministic.
+
 Apply these exclusions:
 
 - ignore self-dependencies

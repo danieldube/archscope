@@ -167,6 +167,7 @@ make_dependency(const SourceManager &source_manager,
                 const std::string &from_definition_path,
                 const std::string &from_compilation_target,
                 const std::string &from_namespace_module,
+                const std::string &from_qualified_type,
                 const NamedDecl *declaration) {
   if (declaration == nullptr) {
     return std::nullopt;
@@ -186,6 +187,8 @@ make_dependency(const SourceManager &source_manager,
   const std::string normalized_path = normalize_path(file_name.str());
   const std::string target_namespace_module =
       resolve_namespace_module(*declaration);
+  const std::string target_qualified_type =
+      declaration->getQualifiedNameAsString();
   if (source_manager.isInSystemHeader(spelling_location)) {
     return ExtractedDependency{translation_unit_path,
                                from_definition_path,
@@ -195,7 +198,9 @@ make_dependency(const SourceManager &source_manager,
                                normalized_path,
                                "",
                                target_namespace_module,
-                               true};
+                               true,
+                               from_qualified_type,
+                               target_qualified_type};
   }
 
   std::string target_translation_unit_path;
@@ -214,7 +219,9 @@ make_dependency(const SourceManager &source_manager,
                              normalized_path,
                              target_compilation_target,
                              target_namespace_module,
-                             false};
+                             false,
+                             from_qualified_type,
+                             target_qualified_type};
 }
 
 void collect_dependencies_from_type(
@@ -224,6 +231,7 @@ void collect_dependencies_from_type(
     const std::string &from_definition_path,
     const std::string &from_compilation_target,
     const std::string &from_namespace_module,
+    const std::string &from_qualified_type,
     std::vector<ExtractedDependency> &dependencies) {
   if (type.isNull()) {
     return;
@@ -233,7 +241,7 @@ void collect_dependencies_from_type(
     collect_dependencies_from_type(
         pointer_type->getPointeeType(), context, translation_unit_paths,
         translation_unit_path, from_definition_path, from_compilation_target,
-        from_namespace_module, dependencies);
+        from_namespace_module, from_qualified_type, dependencies);
     return;
   }
 
@@ -241,7 +249,7 @@ void collect_dependencies_from_type(
     collect_dependencies_from_type(
         reference_type->getPointeeType(), context, translation_unit_paths,
         translation_unit_path, from_definition_path, from_compilation_target,
-        from_namespace_module, dependencies);
+        from_namespace_module, from_qualified_type, dependencies);
     return;
   }
 
@@ -249,7 +257,7 @@ void collect_dependencies_from_type(
     collect_dependencies_from_type(
         array_type->getElementType(), context, translation_unit_paths,
         translation_unit_path, from_definition_path, from_compilation_target,
-        from_namespace_module, dependencies);
+        from_namespace_module, from_qualified_type, dependencies);
     return;
   }
 
@@ -263,7 +271,7 @@ void collect_dependencies_from_type(
       collect_dependencies_from_type(
           argument.getAsType(), context, translation_unit_paths,
           translation_unit_path, from_definition_path, from_compilation_target,
-          from_namespace_module, dependencies);
+          from_namespace_module, from_qualified_type, dependencies);
     }
   }
 
@@ -277,7 +285,8 @@ void collect_dependencies_from_type(
     const auto dependency =
         make_dependency(context.getSourceManager(), translation_unit_paths,
                         translation_unit_path, from_definition_path,
-                        from_compilation_target, from_namespace_module, target);
+                        from_compilation_target, from_namespace_module,
+                        from_qualified_type, target);
     if (dependency.has_value()) {
       dependencies.push_back(*dependency);
     }
@@ -334,20 +343,33 @@ public:
       collect_dependencies_from_type(
           base.getType(), context_, translation_unit_paths_,
           translation_unit_path_, definition_path, compilation_target_,
-          namespace_module, result_.dependencies);
+          namespace_module, qualified_name, result_.dependencies);
     }
 
     for (const FieldDecl *field : record->fields()) {
       collect_dependencies_from_type(
           field->getType(), context_, translation_unit_paths_,
           translation_unit_path_, definition_path, compilation_target_,
-          namespace_module, result_.dependencies);
+          namespace_module, qualified_name, result_.dependencies);
     }
     return true;
   }
 
   bool VisitFunctionDecl(FunctionDecl *function) {
     if (function->isImplicit()) {
+      return true;
+    }
+
+    // Class-level policy: only record function-signature dependencies for
+    // class/struct methods, excluding free functions deterministically.
+    const auto *enclosing_record = function->getParent();
+    if (enclosing_record == nullptr) {
+      return true;
+    }
+
+    const std::string from_qualified_type =
+        enclosing_record->getQualifiedNameAsString();
+    if (from_qualified_type.empty()) {
       return true;
     }
 
@@ -369,13 +391,13 @@ public:
     collect_dependencies_from_type(
         function->getReturnType(), context_, translation_unit_paths_,
         translation_unit_path_, definition_path, compilation_target_,
-        namespace_module, result_.dependencies);
+        namespace_module, from_qualified_type, result_.dependencies);
 
     for (const ParmVarDecl *parameter : function->parameters()) {
       collect_dependencies_from_type(
           parameter->getType(), context_, translation_unit_paths_,
           translation_unit_path_, definition_path, compilation_target_,
-          namespace_module, result_.dependencies);
+          namespace_module, from_qualified_type, result_.dependencies);
     }
 
     return true;
@@ -508,13 +530,22 @@ void sort_extracted_dependencies(
       [](const ExtractedDependency &left, const ExtractedDependency &right) {
         return std::tie(left.from_translation_unit_path,
                         left.from_definition_path, left.from_compilation_target,
+                        left.from_namespace_module,
                         left.target_translation_unit_path,
-                        left.target_definition_path, left.is_system) <
+                        left.target_definition_path,
+                        left.target_compilation_target,
+                        left.target_namespace_module, left.is_system,
+                        left.from_qualified_type, left.target_qualified_type) <
                std::tie(right.from_translation_unit_path,
                         right.from_definition_path,
                         right.from_compilation_target,
+                        right.from_namespace_module,
                         right.target_translation_unit_path,
-                        right.target_definition_path, right.is_system);
+                        right.target_definition_path,
+                        right.target_compilation_target,
+                        right.target_namespace_module, right.is_system,
+                        right.from_qualified_type,
+                        right.target_qualified_type);
       });
 }
 

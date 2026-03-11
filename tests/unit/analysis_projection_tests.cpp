@@ -26,9 +26,9 @@ TEST_CASE("analysis projection groups extracted data by namespace ownership",
       },
       {
           {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/beta.cpp",
-           "src/beta.cpp", "domain", "a::c", false},
+           "src/beta.cpp", "domain", "a::c", false, "", ""},
           {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/alpha.cpp",
-           "src/alpha.cpp", "app", "a::b", false},
+           "src/alpha.cpp", "app", "a::b", false, "", ""},
       },
   };
 
@@ -64,7 +64,7 @@ TEST_CASE("analysis projection preserves translation unit ownership",
       },
       {
           {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/beta.cpp",
-           "src/beta.cpp", "domain", "a::c", false},
+           "src/beta.cpp", "domain", "a::c", false, "", ""},
       },
   };
 
@@ -126,7 +126,7 @@ TEST_CASE("analysis projection uses definition paths for header dependencies",
       },
       {
           {"src/alpha.cpp", "src/alpha.cpp", "app", "sample", "src/alpha.cpp",
-           "include/shared.hpp", "app", "sample", false},
+           "include/shared.hpp", "app", "sample", false, "", ""},
       },
   };
 
@@ -159,7 +159,7 @@ TEST_CASE("analysis projection groups extracted data by compilation target "
       },
       {
           {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample",
-           "src/beta.cpp", "src/beta.cpp", "demo_domain", "sample", false},
+           "src/beta.cpp", "src/beta.cpp", "demo_domain", "sample", false, "", ""},
       },
   };
 
@@ -200,9 +200,9 @@ TEST_CASE("analysis projection derives compilation target dependencies for "
       },
       {
           {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample", "",
-           "include/shared.hpp", "", "sample", false},
+           "include/shared.hpp", "", "sample", false, "", ""},
           {"src/beta.cpp", "src/beta.cpp", "demo_domain", "sample", "",
-           "include/shared.hpp", "", "sample", false},
+           "include/shared.hpp", "", "sample", false, "", ""},
       },
   };
 

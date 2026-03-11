@@ -252,19 +252,65 @@ TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
                "sample_app", "<global>", "src/beta.cpp",
                (project.root() / "src/beta.cpp").string(), "sample_domain",
-               "<global>", false},
+               "<global>", false, "Alpha", "Beta"},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
                "sample_app", "<global>", "src/beta.cpp",
                (project.root() / "src/beta.cpp").string(), "sample_domain",
-               "<global>", false},
+               "<global>", false, "Alpha", "Beta"},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
                "sample_app", "<global>", "src/beta.cpp",
                (project.root() / "src/beta.cpp").string(), "sample_domain",
-               "<global>", false},
+               "<global>", false, "Alpha", "Beta"},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
                "sample_app", "<global>", "src/beta.cpp",
                (project.root() / "src/beta.cpp").string(), "sample_domain",
-               "<global>", false},
+               "<global>", false, "Derived", "Beta"},
+          });
+}
+
+TEST_CASE("clang tool runner excludes free-function dependencies from class graph",
+          "[clang][extract]") {
+  TemporaryProject project("archscope-clang-tool-runner-function-policy");
+
+  project.write_file("src/beta.cpp", "struct Beta {};\n");
+  project.write_file("src/alpha.cpp", "#include \"beta.cpp\"\n"
+                                      "Beta helper(Beta value);\n"
+                                      "struct Alpha {\n"
+                                      "  Beta make(Beta value);\n"
+                                      "};\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/alpha.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/alpha.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/beta.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/beta.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto analysis = extract_analysis(project);
+
+  REQUIRE(analysis.dependencies ==
+          std::vector<archscope::clang_backend::ExtractedDependency>{
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "", "<global>",
+               false, "Alpha", "Beta"},
+              {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
+               "", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "", "<global>",
+               false, "Alpha", "Beta"},
           });
 }
 
@@ -484,6 +530,6 @@ TEST_CASE("clang tool runner records dependency definition paths for header "
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
                "sample_app", "sample", "",
                (project.root() / "include/shared.hpp").string(), "", "sample",
-               false},
+               false, "sample::SourceDefined", "sample::HeaderOnly"},
           });
 }

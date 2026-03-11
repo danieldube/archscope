@@ -37,6 +37,8 @@ struct ExtractedDependency {
   std::string target_compilation_target;
   std::string target_namespace_module;
   bool is_system = false;
+  std::string from_qualified_type;
+  std::string target_qualified_type;
 
   [[nodiscard]] bool operator==(const ExtractedDependency &other) const {
     return from_translation_unit_path == other.from_translation_unit_path &&
@@ -47,7 +49,9 @@ struct ExtractedDependency {
            target_definition_path == other.target_definition_path &&
            target_compilation_target == other.target_compilation_target &&
            target_namespace_module == other.target_namespace_module &&
-           is_system == other.is_system;
+           is_system == other.is_system &&
+           from_qualified_type == other.from_qualified_type &&
+           target_qualified_type == other.target_qualified_type;
   }
 };
 
