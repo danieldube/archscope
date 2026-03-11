@@ -36,6 +36,11 @@ if(NOT archscope_output STREQUAL "")
 endif()
 
 file(READ "${EXPECTED_FILE}" expected_output)
+get_filename_component(fixture_dir "${FIXTURE_DB}" DIRECTORY)
+get_filename_component(expected_header_path
+                       "${fixture_dir}/include/domain/alpha.hpp" ABSOLUTE)
+string(REPLACE "@HEADER_PATH@" "${expected_header_path}" expected_output
+               "${expected_output}")
 file(READ "${REPORT_OUTPUT}" actual_output)
 
 if(NOT actual_output STREQUAL expected_output)

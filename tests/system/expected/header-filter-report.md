@@ -1,5 +1,5 @@
 **header_fixture**
 
-/home/daniel/projects/archscopoe/tests/fixtures/header_project/include/domain/alpha.hpp:
+@HEADER_PATH@:
  * Abstractness: 1.000
  * Instability: 0.000
