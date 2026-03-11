@@ -64,13 +64,15 @@ std::vector<archscope::clang_backend::ExtractedType>
 extract_types(const TemporaryProject &project) {
   const auto extracted =
       archscope::clang_backend::extract_analysis(load_database(project));
-  const std::string diagnostic =
-      extracted.has_value()
-          ? std::string{}
-          : extracted.error().message + " :: " +
-                (extracted.error().failed_translation_units.empty()
-                     ? std::string{"<none>"}
-                     : extracted.error().failed_translation_units.front());
+  std::string diagnostic;
+  if (!extracted.has_value()) {
+    std::string failed_translation_unit{"<none>"};
+    if (!extracted.error().failed_translation_units.empty()) {
+      failed_translation_unit =
+          extracted.error().failed_translation_units.front();
+    }
+    diagnostic = extracted.error().message + " :: " + failed_translation_unit;
+  }
   INFO(diagnostic);
   REQUIRE(extracted.has_value());
   return extracted.value().types;
@@ -80,13 +82,15 @@ archscope::clang_backend::ExtractionResult
 extract_analysis(const TemporaryProject &project) {
   const auto extracted =
       archscope::clang_backend::extract_analysis(load_database(project));
-  const std::string diagnostic =
-      extracted.has_value()
-          ? std::string{}
-          : extracted.error().message + " :: " +
-                (extracted.error().failed_translation_units.empty()
-                     ? std::string{"<none>"}
-                     : extracted.error().failed_translation_units.front());
+  std::string diagnostic;
+  if (!extracted.has_value()) {
+    std::string failed_translation_unit{"<none>"};
+    if (!extracted.error().failed_translation_units.empty()) {
+      failed_translation_unit =
+          extracted.error().failed_translation_units.front();
+    }
+    diagnostic = extracted.error().message + " :: " + failed_translation_unit;
+  }
   INFO(diagnostic);
   REQUIRE(extracted.has_value());
   return extracted.value();
@@ -96,13 +100,15 @@ archscope::clang_backend::ExtractionResult
 extract_analysis(const TemporaryProject &project, const unsigned thread_count) {
   const auto extracted = archscope::clang_backend::extract_analysis(
       load_database(project), thread_count);
-  const std::string diagnostic =
-      extracted.has_value()
-          ? std::string{}
-          : extracted.error().message + " :: " +
-                (extracted.error().failed_translation_units.empty()
-                     ? std::string{"<none>"}
-                     : extracted.error().failed_translation_units.front());
+  std::string diagnostic;
+  if (!extracted.has_value()) {
+    std::string failed_translation_unit{"<none>"};
+    if (!extracted.error().failed_translation_units.empty()) {
+      failed_translation_unit =
+          extracted.error().failed_translation_units.front();
+    }
+    diagnostic = extracted.error().message + " :: " + failed_translation_unit;
+  }
   INFO(diagnostic);
   REQUIRE(extracted.has_value());
   return extracted.value();
