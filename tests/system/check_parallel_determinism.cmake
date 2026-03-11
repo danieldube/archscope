@@ -39,7 +39,8 @@ function(run_archscope module_kind threads iteration output_file)
   endif()
 endfunction()
 
-set(ARCHSCOPE_MODULE_KINDS translation_unit namespace header)
+set(ARCHSCOPE_MODULE_KINDS translation_unit namespace header
+                           compilation_target)
 
 foreach(module_kind IN LISTS ARCHSCOPE_MODULE_KINDS)
   set(REFERENCE_OUTPUT
@@ -92,4 +93,14 @@ if(NOT HEADER_OUTPUT MATCHES "include/platform/api.hpp:"
    OR NOT HEADER_OUTPUT MATCHES "src/app/facade.cpp:")
   message(FATAL_ERROR "Header determinism fixture did not emit the expected "
                       "header/source owner modules.")
+endif()
+
+file(READ "${REPORT_OUTPUT_DIR}/compilation_target-threads-1-reference.md"
+     COMPILATION_TARGET_OUTPUT)
+if(NOT COMPILATION_TARGET_OUTPUT MATCHES "platform_adapters:"
+   OR NOT COMPILATION_TARGET_OUTPUT MATCHES "platform_app:"
+   OR NOT COMPILATION_TARGET_OUTPUT MATCHES "platform_domain:")
+  message(
+    FATAL_ERROR "Compilation-target determinism fixture did not emit the "
+                "expected target owner modules.")
 endif()

@@ -1,0 +1,32 @@
+[
+  {
+    "directory": ".",
+    "file": "src/alpha.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/alpha.cpp"
+    ],
+    "output": "CMakeFiles/demo_app.dir/src/alpha.cpp.o"
+  },
+  {
+    "directory": ".",
+    "file": "src/gamma.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/gamma.cpp"
+    ],
+    "output": "CMakeFiles/demo_app.dir/src/gamma.cpp.o"
+  },
+  {
+    "directory": ".",
+    "file": "src/beta.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/beta.cpp"
+    ],
+    "output": "CMakeFiles/demo_domain.dir/src/beta.cpp.o"
+  }
+]

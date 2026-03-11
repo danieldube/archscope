@@ -1,10 +1,10 @@
-# ADR 0006: Standardize module ownership for namespace, translation-unit, and header modes
+# ADR 0006: Standardize module ownership for namespace, translation-unit, header, and compilation-target modes
 
 - Status: Accepted
 
 ## Context
 
-ArchScope reports metrics per module, but the project supports three distinct
+ArchScope reports metrics per module, but the project supports four distinct
 module kinds. The ownership rule must be deterministic so type counts and
 dependency edges land in the same module on every run.
 
@@ -20,6 +20,11 @@ Define module ownership as follows:
 - Header mode: owner is the normalized spelling path of the file where the
   type definition appears. If the definition is in a `.cpp`, that source file
   is still the owner.
+- Compilation-target mode: owner is the target id derived from the compile
+  command output metadata. Prefer the target name encoded by a CMake-style
+  `CMakeFiles/<target>.dir/...` object path; otherwise use the normalized
+  object-output directory; if no output metadata exists, fall back to the
+  source path for that compile command.
 
 System-header declarations are excluded from ownership in all modes.
 
@@ -33,9 +38,14 @@ System-header declarations are excluded from ownership in all modes.
 - Treat only headers as valid header-mode owners: rejected because some types
   are intentionally defined in source files and still need a deterministic
   owner.
+- Require explicit link-step metadata for compilation-target mode: rejected
+  because `compile_commands.json` records compile steps, not link steps, and
+  object-output metadata is the most portable deterministic signal available.
 
 ## Consequences
 
 - Module identifiers are stable and predictable across runs.
 - Header mode can represent both header-defined and source-defined types.
 - Filtering behavior can remain module-kind-specific without changing analysis.
+- Compilation-target mode can legitimately report the same definition in
+  multiple modules when that definition is compiled into multiple targets.

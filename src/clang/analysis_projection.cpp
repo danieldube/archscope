@@ -22,6 +22,8 @@ core::ModuleId select_module(const ExtractedType &type,
     return ModuleId{type.translation_unit_path};
   case ModuleKind::header:
     return ModuleId{type.definition_path};
+  case ModuleKind::compilation_target:
+    return ModuleId{type.compilation_target};
   }
 
   throw std::invalid_argument("unsupported module kind");
@@ -47,6 +49,14 @@ select_dependency(const ExtractedDependency &dependency,
   case ModuleKind::header:
     return DependencyCandidate{ModuleId{dependency.from_definition_path},
                                ModuleId{dependency.target_definition_path},
+                               dependency.is_system};
+  case ModuleKind::compilation_target:
+    if (dependency.from_compilation_target.empty() ||
+        dependency.target_compilation_target.empty()) {
+      return std::nullopt;
+    }
+    return DependencyCandidate{ModuleId{dependency.from_compilation_target},
+                               ModuleId{dependency.target_compilation_target},
                                dependency.is_system};
   }
 

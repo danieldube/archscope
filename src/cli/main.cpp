@@ -111,6 +111,9 @@ ParseModuleKind(const std::string &value) {
   if (value == "header") {
     return archscope::core::ModuleKind::header;
   }
+  if (value == "compilation_target") {
+    return archscope::core::ModuleKind::compilation_target;
+  }
   return std::nullopt;
 }
 
@@ -242,6 +245,8 @@ std::string ModuleKindName(const archscope::core::ModuleKind module_kind) {
     return "translation_unit";
   case archscope::core::ModuleKind::header:
     return "header";
+  case archscope::core::ModuleKind::compilation_target:
+    return "compilation_target";
   }
 
   return "unknown";

@@ -16,6 +16,7 @@ TEST_CASE("help text documents the supported bootstrap options",
   REQUIRE(help.find("--threads=<n>") != std::string::npos);
   REQUIRE(help.find("--verbose") != std::string::npos);
   REQUIRE(help.find("header") != std::string::npos);
+  REQUIRE(help.find("compilation_target") != std::string::npos);
   REQUIRE(help.find("--module-filter=<text>") != std::string::npos);
   REQUIRE(help.find("abstractness") != std::string::npos);
   REQUIRE(help.find("abstract_type_count") != std::string::npos);

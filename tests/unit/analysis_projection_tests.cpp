@@ -17,15 +17,18 @@ TEST_CASE("analysis projection groups extracted data by namespace ownership",
 
   const archscope::clang_backend::ExtractionResult extraction{
       {
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Interface", true},
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Concrete", false},
-          {"src/beta.cpp", "src/beta.cpp", "a::c", "a::c::Leaf", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "a::b::Interface",
+           true},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "a::b::Concrete",
+           false},
+          {"src/beta.cpp", "src/beta.cpp", "domain", "a::c", "a::c::Leaf",
+           false},
       },
       {
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/beta.cpp",
-           "src/beta.cpp", "a::c", false},
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/alpha.cpp",
-           "src/alpha.cpp", "a::b", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/beta.cpp",
+           "src/beta.cpp", "domain", "a::c", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/alpha.cpp",
+           "src/alpha.cpp", "app", "a::b", false},
       },
   };
 
@@ -54,13 +57,14 @@ TEST_CASE("analysis projection preserves translation unit ownership",
 
   const archscope::clang_backend::ExtractionResult extraction{
       {
-          {"src/alpha.cpp", "include/shared.hpp", "a::b", "a::b::Shared",
+          {"src/alpha.cpp", "include/shared.hpp", "app", "a::b", "a::b::Shared",
            false},
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "a::b::Alpha", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "a::b::Alpha",
+           false},
       },
       {
-          {"src/alpha.cpp", "src/alpha.cpp", "a::b", "src/beta.cpp",
-           "src/beta.cpp", "a::c", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "a::b", "src/beta.cpp",
+           "src/beta.cpp", "domain", "a::c", false},
       },
   };
 
@@ -84,10 +88,10 @@ TEST_CASE("analysis projection uses definition paths for header ownership",
 
   const archscope::clang_backend::ExtractionResult extraction{
       {
-          {"src/alpha.cpp", "include/shared.hpp", "sample",
+          {"src/alpha.cpp", "include/shared.hpp", "app", "sample",
            "sample::HeaderOnly", false},
-          {"src/alpha.cpp", "src/alpha.cpp", "sample", "sample::LocalType",
-           false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "sample",
+           "sample::LocalType", false},
       },
       {},
   };
@@ -115,14 +119,14 @@ TEST_CASE("analysis projection uses definition paths for header dependencies",
 
   const archscope::clang_backend::ExtractionResult extraction{
       {
-          {"src/alpha.cpp", "include/shared.hpp", "sample",
+          {"src/alpha.cpp", "include/shared.hpp", "app", "sample",
            "sample::HeaderOnly", false},
-          {"src/alpha.cpp", "src/alpha.cpp", "sample", "sample::LocalType",
-           false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "sample",
+           "sample::LocalType", false},
       },
       {
-          {"src/alpha.cpp", "src/alpha.cpp", "sample", "src/alpha.cpp",
-           "include/shared.hpp", "sample", false},
+          {"src/alpha.cpp", "src/alpha.cpp", "app", "sample", "src/alpha.cpp",
+           "include/shared.hpp", "app", "sample", false},
       },
   };
 
@@ -132,4 +136,44 @@ TEST_CASE("analysis projection uses definition paths for header dependencies",
   REQUIRE(analysis.graph.outgoing.at(ModuleId{"src/alpha.cpp"}) ==
           std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
               ModuleId{"include/shared.hpp"}});
+}
+
+TEST_CASE("analysis projection groups extracted data by compilation target "
+          "ownership",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+  using archscope::core::TypeId;
+  using archscope::core::TypeInfo;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample",
+           "sample::Alpha", false},
+          {"src/gamma.cpp", "src/gamma.cpp", "demo_app", "sample",
+           "sample::Gamma", false},
+          {"src/beta.cpp", "src/beta.cpp", "demo_domain", "sample",
+           "sample::Beta", true},
+      },
+      {
+          {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample",
+           "src/beta.cpp", "src/beta.cpp", "demo_domain", "sample", false},
+      },
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::compilation_target);
+
+  REQUIRE(analysis.modules ==
+          std::vector<ModuleId>{ModuleId{"demo_app"}, ModuleId{"demo_domain"}});
+  REQUIRE(analysis.types ==
+          std::vector<TypeInfo>{
+              {TypeId{"sample::Alpha"}, ModuleId{"demo_app"}, false, true},
+              {TypeId{"sample::Gamma"}, ModuleId{"demo_app"}, false, true},
+              {TypeId{"sample::Beta"}, ModuleId{"demo_domain"}, true, false},
+          });
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"demo_app"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"demo_domain"}});
 }

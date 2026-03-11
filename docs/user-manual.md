@@ -14,11 +14,11 @@ writes a deterministic Markdown report.
 `archscope --version`
 : Print the executable version string.
 
-`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>] [--verbose]`
+`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header|compilation_target> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>] [--verbose]`
 : Load the compilation database, group results by translation unit, namespace,
-  or header definition file, optionally filter the emitted module list, and
-  write a Markdown report with metric values in the exact order requested on
-  the command line.
+  header definition file, or compilation target, optionally filter the emitted
+  module list, and write a Markdown report with metric values in the exact
+  order requested on the command line.
 
 ## Metrics
 
@@ -34,7 +34,7 @@ Metrics are emitted in the same order they are requested on the CLI.
 ## Options
 
 - `--module=<kind>`: required; one of `translation_unit`, `namespace`, or
-  `header`
+  `header`, or `compilation_target`
 - `--module-filter=<text>`: optional output filter; analysis still runs over
   the full project graph
 - `--report=<path>`: output Markdown file path; defaults to
@@ -55,6 +55,11 @@ Metrics are emitted in the same order they are requested on the CLI.
   parent scope; `--module-filter` uses prefix matching
 - `header`: module owner is the normalized spelling path of the definition
   file; `--module-filter` uses substring matching on the normalized path
+- `compilation_target`: module owner is the compilation target derived from the
+  compile command output metadata; CMake-style
+  `CMakeFiles/<target>.dir/...` outputs emit `<target>`, otherwise ArchScope
+  falls back to the normalized object-output directory or source path;
+  `--module-filter` uses exact matching
 
 ## Examples
 
@@ -81,6 +86,15 @@ Header report with normalized-path filtering:
   abstractness instability --module=header \
   --module-filter=include/domain/../domain/alpha.hpp \
   --report=/tmp/header-report.md
+```
+
+Compilation-target report:
+
+```bash
+./build/archscope tests/fixtures/compilation_target_project/compile_commands.json \
+  abstractness instability abstract_type_count concrete_type_count \
+  type_count distance_from_main_sequence \
+  --module=compilation_target --report=/tmp/target-report.md
 ```
 
 Translation-unit report with explicit thread count:
@@ -136,8 +150,8 @@ You can run that fixture directly from the repository root:
 ```
 
 The parallel determinism fixture compares repeated `--threads=1` and
-`--threads=4` runs byte-for-byte for translation-unit, namespace, and header
-reports.
+`--threads=4` runs byte-for-byte for translation-unit, namespace, header, and
+compilation-target reports.
 
 ## Troubleshooting
 
@@ -153,8 +167,8 @@ Use `--verbose` to add progress logs before a failure, or to confirm which
 analysis stage the command is currently executing.
 
 - `error: usage error` with `option: --module=<kind>`
-  Provide `--module=translation_unit`, `--module=namespace`, or
-  `--module=header`.
+  Provide `--module=translation_unit`, `--module=namespace`,
+  `--module=header`, or `--module=compilation_target`.
 - `error: usage error` with `metric: <name>`
   Use one or more of `abstractness`, `instability`, `abstract_type_count`,
   `concrete_type_count`, `type_count`, and

@@ -11,6 +11,7 @@ enum class ModuleKind {
   namespace_module,
   translation_unit,
   header,
+  compilation_target,
 };
 
 struct ModuleId {

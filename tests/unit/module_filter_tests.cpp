@@ -51,3 +51,13 @@ TEST_CASE("header filter uses substring matching on normalized paths",
       ModuleKind::header, "/workspace/project/include/domain/alpha.hpp",
       std::string{"include/domain/beta.hpp"}));
 }
+
+TEST_CASE("compilation target filter uses exact matching", "[module-filter]") {
+  using archscope::core::ModuleKind;
+
+  REQUIRE(archscope::core::matches_module_filter(
+      ModuleKind::compilation_target, "demo_app", std::string{"demo_app"}));
+  REQUIRE_FALSE(archscope::core::matches_module_filter(
+      ModuleKind::compilation_target, "demo_app",
+      std::string{"demo_app_tests"}));
+}

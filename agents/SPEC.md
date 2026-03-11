@@ -33,7 +33,8 @@ agent** using the processes and constraints described here.
 - Support module grouping by: 1. **Namespace module** (e.g.,
   `--module=namespace --module-filter=my::ns`) 2. **Translation unit module**
   (each source file entry) 3. **Header module** (headers as owners of
-  declarations; see §8.3)
+  declarations; see §8.3) 4. **Compilation target module** (everything built
+  into the same binary/library, derived from compile-command output metadata)
 - Compute A, I, D for each module.
 - Write a Markdown report to file.
 
@@ -66,11 +67,13 @@ distance_from_main_sequence --module=namespace \
   - `namespace`
   - `translation_unit`
   - `header`
+  - `compilation_target`
 - `--module-filter=<string>`
   - If `--module=namespace`: filter module names by **prefix match** (e.g.,
     `my::ns` matches `my::ns`, `my::ns::detail`).
   - If `--module=translation_unit`: filter by file path substring.
   - If `--module=header`: filter by header path substring.
+  - If `--module=compilation_target`: filter by exact target id.
 - `--report=<path>` output Markdown file (default: `architecture-metrics.md` in
   current working directory)
 - `--project-name=<string>` optional override for report header (default:
@@ -377,6 +380,16 @@ Ownership determines where types and dependencies “belong”.
   (still valid).
 - For system headers: ignore types defined in system headers (unless configured
   later).
+
+#### Compilation target module
+- Owner module id = target id derived from compile-command output metadata.
+- If the compile command output path matches `CMakeFiles/<target>.dir/...`,
+  emit `<target>`.
+- Otherwise use the normalized object-output directory.
+- If no output metadata exists, fall back to the source path so ownership stays
+  deterministic.
+- A definition may appear in multiple compilation-target modules if it is
+  compiled into multiple targets.
 
 ### 8.4 Dependency extraction for MVP
 When visiting a type owned by module M:

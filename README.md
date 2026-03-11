@@ -3,7 +3,7 @@
 ArchScope is a C++17 command-line tool that computes architecture metrics from
 projects with a `compile_commands.json` database. It uses Clang LibTooling for
 semantic C++ analysis and emits deterministic Markdown reports for
-translation-unit, namespace, and header modules.
+translation-unit, namespace, header, and compilation-target modules.
 
 ## Installation
 
@@ -59,6 +59,14 @@ Run a deterministic multi-metric report in parallel:
   --report=/tmp/archscope-deterministic-report.md
 ```
 
+Run a compilation-target report grouped by build target:
+
+```bash
+./build/archscope tests/fixtures/compilation_target_project/compile_commands.json \
+  abstractness instability --module=compilation_target \
+  --report=/tmp/archscope-target-report.md
+```
+
 ## CLI summary
 
 Canonical form:
@@ -83,12 +91,14 @@ Supported module kinds:
 - `translation_unit`
 - `namespace`
 - `header`
+- `compilation_target`
 
 Filter behavior:
 
 - `translation_unit`: substring match on the emitted source path
 - `namespace`: prefix match on the fully qualified namespace
 - `header`: substring match on the normalized definition path
+- `compilation_target`: exact match on the emitted target id
 
 Exit codes:
 
@@ -116,7 +126,10 @@ namespace owners, and abstract/concrete classification, and extracts
 dependency candidates from base classes, fields, and function signatures.
 `--module-filter` filters only the emitted module list, not the underlying
 analysis graph. `--threads=<n>` runs per-translation-unit extraction in
-parallel while preserving deterministic output ordering.
+parallel while preserving deterministic output ordering. Compilation-target
+ownership is derived from each compile command's object output metadata,
+preferring CMake-style `CMakeFiles/<target>.dir/...` target names when
+available.
 
 ## Documentation map
 

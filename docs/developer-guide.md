@@ -85,6 +85,9 @@ observe stale binaries.
   distance from the main sequence.
 - `src/core/module_filter.*` owns module-name matching rules so report
   filtering stays independent from Clang traversal and metric computation.
+- `src/core/compilation_database.*` also derives a best-effort
+  `compilation_target` id from each compile command's output metadata so the
+  analysis layer can group translation units by binary or library target.
 - `src/clang/tool_runner.*` adapts the loaded compilation database into
   `clang::tooling::ClangTool` runs and returns deterministic plain-C++ extracted
   type records plus dependency candidates derived from base classes, fields,
@@ -106,6 +109,9 @@ observe stale binaries.
   worker pool, stores per-entry results in compile-database order, and merges
   them after all workers finish so the final extracted types and dependencies
   remain deterministic.
+- Compilation-target ownership is intentionally per compile command. If the
+  same definition is compiled into multiple targets, it can appear once per
+  target in `--module=compilation_target` output.
 
 ## Adding a new metric
 
@@ -122,6 +128,18 @@ observe stale binaries.
 
 Metric functions should stay pure: they consume `AnalysisResult` plus
 `ModuleId`, and they do not perform filesystem access or Clang queries.
+
+## Adding a new module kind
+
+1. Add focused unit coverage for the new ownership rule in
+   `tests/unit/analysis_projection_tests.cpp`, plus filter and CLI/help
+   coverage if the public contract changes.
+2. Extend the plain-C++ source data first if the new module kind needs extra
+   compile-database metadata or extraction fields.
+3. Keep ownership derivation deterministic and document any fallback behavior
+   in `docs/adr/0006-module-ownership-rules.md`.
+4. Add or extend a fixture-backed system test so the new module kind is
+   exercised end to end and in the parallel determinism matrix.
 
 ## Adding a new dependency extraction rule
 

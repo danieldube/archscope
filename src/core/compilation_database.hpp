@@ -54,6 +54,7 @@ struct CompilationDatabaseEntry {
   std::string source_path;
   std::vector<std::string> arguments;
   std::string working_directory;
+  std::string compilation_target;
 };
 
 struct CompilationDatabase {

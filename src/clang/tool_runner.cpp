@@ -153,13 +153,19 @@ private:
   std::vector<std::string> all_files_;
 };
 
-using TranslationUnitPathMap = std::map<std::string, std::string>;
+struct TranslationUnitMetadata {
+  std::string translation_unit_path;
+  std::string compilation_target;
+};
+
+using TranslationUnitPathMap = std::map<std::string, TranslationUnitMetadata>;
 
 std::optional<ExtractedDependency>
 make_dependency(const SourceManager &source_manager,
                 const TranslationUnitPathMap &translation_unit_paths,
                 const std::string &translation_unit_path,
                 const std::string &from_definition_path,
+                const std::string &from_compilation_target,
                 const std::string &from_namespace_module,
                 const NamedDecl *declaration) {
   if (declaration == nullptr) {
@@ -183,24 +189,30 @@ make_dependency(const SourceManager &source_manager,
   if (source_manager.isInSystemHeader(spelling_location)) {
     return ExtractedDependency{translation_unit_path,
                                from_definition_path,
+                               from_compilation_target,
                                from_namespace_module,
                                normalized_path,
                                normalized_path,
+                               "",
                                target_namespace_module,
                                true};
   }
 
   std::string target_translation_unit_path;
+  std::string target_compilation_target;
   const auto found = translation_unit_paths.find(normalized_path);
   if (found != translation_unit_paths.end()) {
-    target_translation_unit_path = found->second;
+    target_translation_unit_path = found->second.translation_unit_path;
+    target_compilation_target = found->second.compilation_target;
   }
 
   return ExtractedDependency{translation_unit_path,
                              from_definition_path,
+                             from_compilation_target,
                              from_namespace_module,
                              target_translation_unit_path,
                              normalized_path,
+                             target_compilation_target,
                              target_namespace_module,
                              false};
 }
@@ -210,6 +222,7 @@ void collect_dependencies_from_type(
     const TranslationUnitPathMap &translation_unit_paths,
     const std::string &translation_unit_path,
     const std::string &from_definition_path,
+    const std::string &from_compilation_target,
     const std::string &from_namespace_module,
     std::vector<ExtractedDependency> &dependencies) {
   if (type.isNull()) {
@@ -217,26 +230,26 @@ void collect_dependencies_from_type(
   }
 
   if (const auto *pointer_type = type->getAs<clang::PointerType>()) {
-    collect_dependencies_from_type(pointer_type->getPointeeType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, from_definition_path,
-                                   from_namespace_module, dependencies);
+    collect_dependencies_from_type(
+        pointer_type->getPointeeType(), context, translation_unit_paths,
+        translation_unit_path, from_definition_path, from_compilation_target,
+        from_namespace_module, dependencies);
     return;
   }
 
   if (const auto *reference_type = type->getAs<clang::ReferenceType>()) {
-    collect_dependencies_from_type(reference_type->getPointeeType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, from_definition_path,
-                                   from_namespace_module, dependencies);
+    collect_dependencies_from_type(
+        reference_type->getPointeeType(), context, translation_unit_paths,
+        translation_unit_path, from_definition_path, from_compilation_target,
+        from_namespace_module, dependencies);
     return;
   }
 
   if (const auto *array_type = context.getAsArrayType(type)) {
-    collect_dependencies_from_type(array_type->getElementType(), context,
-                                   translation_unit_paths,
-                                   translation_unit_path, from_definition_path,
-                                   from_namespace_module, dependencies);
+    collect_dependencies_from_type(
+        array_type->getElementType(), context, translation_unit_paths,
+        translation_unit_path, from_definition_path, from_compilation_target,
+        from_namespace_module, dependencies);
     return;
   }
 
@@ -249,8 +262,8 @@ void collect_dependencies_from_type(
       }
       collect_dependencies_from_type(
           argument.getAsType(), context, translation_unit_paths,
-          translation_unit_path, from_definition_path, from_namespace_module,
-          dependencies);
+          translation_unit_path, from_definition_path, from_compilation_target,
+          from_namespace_module, dependencies);
     }
   }
 
@@ -264,7 +277,7 @@ void collect_dependencies_from_type(
     const auto dependency =
         make_dependency(context.getSourceManager(), translation_unit_paths,
                         translation_unit_path, from_definition_path,
-                        from_namespace_module, target);
+                        from_compilation_target, from_namespace_module, target);
     if (dependency.has_value()) {
       dependencies.push_back(*dependency);
     }
@@ -274,10 +287,12 @@ void collect_dependencies_from_type(
 class AnalysisCollector : public clang::RecursiveASTVisitor<AnalysisCollector> {
 public:
   AnalysisCollector(ASTContext &context, std::string translation_unit_path,
+                    std::string compilation_target,
                     const TranslationUnitPathMap &translation_unit_paths,
                     ExtractionResult &result)
       : context_(context),
         translation_unit_path_(std::move(translation_unit_path)),
+        compilation_target_(std::move(compilation_target)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
   bool VisitCXXRecordDecl(CXXRecordDecl *record) {
@@ -312,21 +327,21 @@ public:
     const std::string definition_path = normalize_path(file_name.str());
     const std::string namespace_module = resolve_namespace_module(*record);
     result_.types.push_back({translation_unit_path_, definition_path,
-                             namespace_module, qualified_name,
-                             record->isAbstract()});
+                             compilation_target_, namespace_module,
+                             qualified_name, record->isAbstract()});
 
     for (const clang::CXXBaseSpecifier &base : record->bases()) {
-      collect_dependencies_from_type(base.getType(), context_,
-                                     translation_unit_paths_,
-                                     translation_unit_path_, definition_path,
-                                     namespace_module, result_.dependencies);
+      collect_dependencies_from_type(
+          base.getType(), context_, translation_unit_paths_,
+          translation_unit_path_, definition_path, compilation_target_,
+          namespace_module, result_.dependencies);
     }
 
     for (const FieldDecl *field : record->fields()) {
-      collect_dependencies_from_type(field->getType(), context_,
-                                     translation_unit_paths_,
-                                     translation_unit_path_, definition_path,
-                                     namespace_module, result_.dependencies);
+      collect_dependencies_from_type(
+          field->getType(), context_, translation_unit_paths_,
+          translation_unit_path_, definition_path, compilation_target_,
+          namespace_module, result_.dependencies);
     }
     return true;
   }
@@ -351,16 +366,16 @@ public:
 
     const std::string definition_path = normalize_path(file_name.str());
     const std::string namespace_module = resolve_namespace_module(*function);
-    collect_dependencies_from_type(function->getReturnType(), context_,
-                                   translation_unit_paths_,
-                                   translation_unit_path_, definition_path,
-                                   namespace_module, result_.dependencies);
+    collect_dependencies_from_type(
+        function->getReturnType(), context_, translation_unit_paths_,
+        translation_unit_path_, definition_path, compilation_target_,
+        namespace_module, result_.dependencies);
 
     for (const ParmVarDecl *parameter : function->parameters()) {
-      collect_dependencies_from_type(parameter->getType(), context_,
-                                     translation_unit_paths_,
-                                     translation_unit_path_, definition_path,
-                                     namespace_module, result_.dependencies);
+      collect_dependencies_from_type(
+          parameter->getType(), context_, translation_unit_paths_,
+          translation_unit_path_, definition_path, compilation_target_,
+          namespace_module, result_.dependencies);
     }
 
     return true;
@@ -369,6 +384,7 @@ public:
 private:
   ASTContext &context_;
   std::string translation_unit_path_;
+  std::string compilation_target_;
   const TranslationUnitPathMap &translation_unit_paths_;
   ExtractionResult &result_;
 };
@@ -376,20 +392,23 @@ private:
 class AnalysisCollectingConsumer : public clang::ASTConsumer {
 public:
   AnalysisCollectingConsumer(
-      std::string translation_unit_path,
+      std::string translation_unit_path, std::string compilation_target,
       const TranslationUnitPathMap &translation_unit_paths,
       ExtractionResult &result)
       : translation_unit_path_(std::move(translation_unit_path)),
+        compilation_target_(std::move(compilation_target)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
   void HandleTranslationUnit(ASTContext &context) override {
     AnalysisCollector collector(context, translation_unit_path_,
-                                translation_unit_paths_, result_);
+                                compilation_target_, translation_unit_paths_,
+                                result_);
     collector.TraverseDecl(context.getTranslationUnitDecl());
   }
 
 private:
   std::string translation_unit_path_;
+  std::string compilation_target_;
   const TranslationUnitPathMap &translation_unit_paths_;
   ExtractionResult &result_;
 };
@@ -397,19 +416,23 @@ private:
 class AnalysisCollectingAction : public clang::ASTFrontendAction {
 public:
   AnalysisCollectingAction(std::string translation_unit_path,
+                           std::string compilation_target,
                            const TranslationUnitPathMap &translation_unit_paths,
                            ExtractionResult &result)
       : translation_unit_path_(std::move(translation_unit_path)),
+        compilation_target_(std::move(compilation_target)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
   std::unique_ptr<clang::ASTConsumer>
   CreateASTConsumer(clang::CompilerInstance &, llvm::StringRef) override {
     return std::make_unique<AnalysisCollectingConsumer>(
-        translation_unit_path_, translation_unit_paths_, result_);
+        translation_unit_path_, compilation_target_, translation_unit_paths_,
+        result_);
   }
 
 private:
   std::string translation_unit_path_;
+  std::string compilation_target_;
   const TranslationUnitPathMap &translation_unit_paths_;
   ExtractionResult &result_;
 };
@@ -418,19 +441,22 @@ class AnalysisCollectingActionFactory
     : public clang::tooling::FrontendActionFactory {
 public:
   AnalysisCollectingActionFactory(
-      std::string translation_unit_path,
+      std::string translation_unit_path, std::string compilation_target,
       const TranslationUnitPathMap &translation_unit_paths,
       ExtractionResult &result)
       : translation_unit_path_(std::move(translation_unit_path)),
+        compilation_target_(std::move(compilation_target)),
         translation_unit_paths_(translation_unit_paths), result_(result) {}
 
   std::unique_ptr<clang::FrontendAction> create() override {
     return std::make_unique<AnalysisCollectingAction>(
-        translation_unit_path_, translation_unit_paths_, result_);
+        translation_unit_path_, compilation_target_, translation_unit_paths_,
+        result_);
   }
 
 private:
   std::string translation_unit_path_;
+  std::string compilation_target_;
   const TranslationUnitPathMap &translation_unit_paths_;
   ExtractionResult &result_;
 };
@@ -442,6 +468,7 @@ extract_translation_unit(const core::CompilationDatabaseEntry &entry,
   CoreCompilationDatabase compilation_database(
       core::CompilationDatabase{{entry}});
   const std::string translation_unit_path = entry.source_path;
+  const std::string compilation_target = entry.compilation_target;
   const std::string resolved_translation_unit_path =
       resolve_path(entry, entry.source_path);
   clang::tooling::ClangTool tool(compilation_database,
@@ -452,6 +479,7 @@ extract_translation_unit(const core::CompilationDatabaseEntry &entry,
   tool.appendArgumentsAdjuster(clang::tooling::getClangStripOutputAdjuster());
 
   AnalysisCollectingActionFactory factory(translation_unit_path,
+                                          compilation_target,
                                           translation_unit_paths, result);
   const int tool_result = tool.run(&factory);
   if (tool_result != 0 || diagnostics.error_count() > 0U) {
@@ -466,9 +494,10 @@ void sort_extracted_types(std::vector<ExtractedType> &types) {
   std::sort(types.begin(), types.end(),
             [](const ExtractedType &left, const ExtractedType &right) {
               return std::tie(left.translation_unit_path, left.definition_path,
-                              left.qualified_name) <
+                              left.compilation_target, left.qualified_name) <
                      std::tie(right.translation_unit_path,
-                              right.definition_path, right.qualified_name);
+                              right.definition_path, right.compilation_target,
+                              right.qualified_name);
             });
 }
 
@@ -478,11 +507,12 @@ void sort_extracted_dependencies(
       dependencies.begin(), dependencies.end(),
       [](const ExtractedDependency &left, const ExtractedDependency &right) {
         return std::tie(left.from_translation_unit_path,
-                        left.from_definition_path,
+                        left.from_definition_path, left.from_compilation_target,
                         left.target_translation_unit_path,
                         left.target_definition_path, left.is_system) <
                std::tie(right.from_translation_unit_path,
                         right.from_definition_path,
+                        right.from_compilation_target,
                         right.target_translation_unit_path,
                         right.target_definition_path, right.is_system);
       });
@@ -497,7 +527,10 @@ extract_analysis(const core::CompilationDatabase &database,
 
   for (const auto &entry : database.entries) {
     translation_unit_paths.emplace(resolve_path(entry, entry.source_path),
-                                   entry.source_path);
+                                   TranslationUnitMetadata{
+                                       entry.source_path,
+                                       entry.compilation_target,
+                                   });
   }
 
   if (database.entries.empty()) {

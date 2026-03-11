@@ -156,14 +156,17 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/alpha.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/alpha.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_app.dir/src/alpha.cpp.o\"\n"
       "  },\n"
       "  {\n"
       "    \"directory\": " +
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/zeta.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/zeta.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/zeta.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_lib.dir/src/zeta.cpp.o\"\n"
       "  }\n"
       "]\n");
 
@@ -173,6 +176,7 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                        {
                            "src/alpha.cpp",
                            (project.root() / "include/common.hpp").string(),
+                           "sample_app",
                            "sample",
                            "sample::Shared",
                            false,
@@ -180,6 +184,7 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                        {
                            "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
+                           "sample_app",
                            "sample",
                            "sample::Alpha",
                            false,
@@ -187,6 +192,7 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                        {
                            "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
+                           "sample_app",
                            "sample",
                            "sample::Interface",
                            true,
@@ -194,6 +200,7 @@ TEST_CASE("clang tool runner extracts qualified type names and definition "
                        {
                            "src/zeta.cpp",
                            (project.root() / "src/zeta.cpp").string(),
+                           "sample_lib",
                            "sample::detail",
                            "sample::detail::Zeta",
                            false,
@@ -224,14 +231,17 @@ TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/alpha.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/alpha.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_app.dir/src/alpha.cpp.o\"\n"
       "  },\n"
       "  {\n"
       "    \"directory\": " +
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/beta.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/beta.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/beta.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_domain.dir/src/beta.cpp.o\"\n"
       "  }\n"
       "]\n");
 
@@ -240,17 +250,21 @@ TEST_CASE("clang tool runner extracts translation-unit dependency candidates",
   REQUIRE(analysis.dependencies ==
           std::vector<archscope::clang_backend::ExtractedDependency>{
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
-               "<global>", "src/beta.cpp",
-               (project.root() / "src/beta.cpp").string(), "<global>", false},
+               "sample_app", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "sample_domain",
+               "<global>", false},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
-               "<global>", "src/beta.cpp",
-               (project.root() / "src/beta.cpp").string(), "<global>", false},
+               "sample_app", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "sample_domain",
+               "<global>", false},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
-               "<global>", "src/beta.cpp",
-               (project.root() / "src/beta.cpp").string(), "<global>", false},
+               "sample_app", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "sample_domain",
+               "<global>", false},
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
-               "<global>", "src/beta.cpp",
-               (project.root() / "src/beta.cpp").string(), "<global>", false},
+               "sample_app", "<global>", "src/beta.cpp",
+               (project.root() / "src/beta.cpp").string(), "sample_domain",
+               "<global>", false},
           });
 }
 
@@ -406,7 +420,9 @@ TEST_CASE("clang tool runner captures header and source definition paths",
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/alpha.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/alpha.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_app.dir/src/alpha.cpp.o\"\n"
       "  }\n"
       "]\n");
 
@@ -416,6 +432,7 @@ TEST_CASE("clang tool runner captures header and source definition paths",
                        {
                            "src/alpha.cpp",
                            (project.root() / "include/shared.hpp").string(),
+                           "sample_app",
                            "sample",
                            "sample::HeaderOnly",
                            false,
@@ -423,6 +440,7 @@ TEST_CASE("clang tool runner captures header and source definition paths",
                        {
                            "src/alpha.cpp",
                            (project.root() / "src/alpha.cpp").string(),
+                           "sample_app",
                            "sample",
                            "sample::SourceDefined",
                            false,
@@ -453,7 +471,9 @@ TEST_CASE("clang tool runner records dependency definition paths for header "
       quoted_path(project.root()) +
       ",\n"
       "    \"file\": \"src/alpha.cpp\",\n"
-      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/alpha.cpp\"],\n"
+      "    \"output\": \"CMakeFiles/sample_app.dir/src/alpha.cpp.o\"\n"
       "  }\n"
       "]\n");
 
@@ -462,7 +482,8 @@ TEST_CASE("clang tool runner records dependency definition paths for header "
   REQUIRE(analysis.dependencies ==
           std::vector<archscope::clang_backend::ExtractedDependency>{
               {"src/alpha.cpp", (project.root() / "src/alpha.cpp").string(),
-               "sample", "", (project.root() / "include/shared.hpp").string(),
-               "sample", false},
+               "sample_app", "sample", "",
+               (project.root() / "include/shared.hpp").string(), "", "sample",
+               false},
           });
 }

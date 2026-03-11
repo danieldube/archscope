@@ -32,6 +32,8 @@ bool matches_module_filter(const ModuleKind module_kind,
   case ModuleKind::header:
     return normalize_path_string(module).find(normalize_path_string(*filter)) !=
            std::string::npos;
+  case ModuleKind::compilation_target:
+    return module == *filter;
   }
 
   return false;
