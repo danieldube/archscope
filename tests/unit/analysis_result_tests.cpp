@@ -84,10 +84,11 @@ TEST_CASE("class-scope assembly collects unique class ids in sorted order",
                                 ClassId{"project::Alpha"},
                                 ClassId{"project::Zulu"},
                             });
-  REQUIRE(result.entities == std::vector<EntityId>{
-                                 EntityId::class_type(ClassId{"project::Alpha"}),
-                                 EntityId::class_type(ClassId{"project::Zulu"}),
-                             });
+  REQUIRE(result.entities ==
+          std::vector<EntityId>{
+              EntityId::class_type(ClassId{"project::Alpha"}),
+              EntityId::class_type(ClassId{"project::Zulu"}),
+          });
 }
 
 TEST_CASE("class-scope assembly includes graph-only entities", "[analysis]") {
@@ -136,10 +137,11 @@ TEST_CASE("class-scope assembly handles mixed module and class graph inputs",
       },
       std::move(graph), AnalysisScope::class_type);
 
-  REQUIRE(result.entities == std::vector<EntityId>{
-                                 EntityId::class_type(ClassId{"project::Alpha"}),
-                                 EntityId::class_type(ClassId{"project::Beta"}),
-                                 EntityId::class_type(ClassId{"project::Zulu"}),
-                             });
+  REQUIRE(result.entities ==
+          std::vector<EntityId>{
+              EntityId::class_type(ClassId{"project::Alpha"}),
+              EntityId::class_type(ClassId{"project::Beta"}),
+              EntityId::class_type(ClassId{"project::Zulu"}),
+          });
   REQUIRE(result.modules == std::vector<ModuleId>{ModuleId{"src/alpha.cpp"}});
 }

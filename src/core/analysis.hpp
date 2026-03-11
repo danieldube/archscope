@@ -90,8 +90,8 @@ struct TypeInfo {
 
   [[nodiscard]] bool operator==(const TypeInfo &other) const {
     return id == other.id && owner == other.owner &&
-           is_abstract == other.is_abstract && is_concrete == other.is_concrete &&
-           class_id == other.class_id;
+           is_abstract == other.is_abstract &&
+           is_concrete == other.is_concrete && class_id == other.class_id;
   }
 };
 
@@ -148,10 +148,9 @@ struct AnalysisResult {
   AnalysisScope scope = AnalysisScope::module;
 };
 
-AnalysisResult assemble_analysis_result(std::vector<TypeInfo> types,
-                                        DependencyGraph graph,
-                                        AnalysisScope scope =
-                                            AnalysisScope::module);
+AnalysisResult
+assemble_analysis_result(std::vector<TypeInfo> types, DependencyGraph graph,
+                         AnalysisScope scope = AnalysisScope::module);
 AnalysisResult assemble_analysis_result(std::vector<TypeInfo> types,
                                         EntityDependencyGraph graph,
                                         AnalysisScope scope);
