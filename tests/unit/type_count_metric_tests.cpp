@@ -6,9 +6,8 @@
 TEST_CASE("abstract type count is zero for an empty module",
           "[metrics][counts]") {
   const archscope::core::AnalysisResult result{
-      {archscope::core::ModuleId{"src/empty.cpp"}},
-      {},
-      {},
+      {archscope::core::ModuleId{"src/empty.cpp"}}, {}, {}, {}, {}, {},
+      archscope::core::AnalysisScope::module,
   };
 
   REQUIRE(archscope::core::compute_abstract_type_count(
@@ -82,9 +81,8 @@ TEST_CASE("concrete type count includes only concrete types in the module",
 
 TEST_CASE("type count is zero for an empty module", "[metrics][counts]") {
   const archscope::core::AnalysisResult result{
-      {archscope::core::ModuleId{"src/empty.cpp"}},
-      {},
-      {},
+      {archscope::core::ModuleId{"src/empty.cpp"}}, {}, {}, {}, {}, {},
+      archscope::core::AnalysisScope::module,
   };
 
   REQUIRE(archscope::core::compute_type_count(

@@ -7,9 +7,8 @@ TEST_CASE("instability is zero for a module with no incoming or outgoing "
           "dependencies",
           "[metrics][instability]") {
   const archscope::core::AnalysisResult result{
-      {archscope::core::ModuleId{"src/isolated.cpp"}},
-      {},
-      {},
+      {archscope::core::ModuleId{"src/isolated.cpp"}}, {}, {}, {}, {}, {},
+      archscope::core::AnalysisScope::module,
   };
 
   REQUIRE(archscope::core::compute_instability(

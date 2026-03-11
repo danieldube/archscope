@@ -52,6 +52,10 @@ TEST_CASE("metric registry computes abstractness for empty module",
       {ModuleId{"src/empty.cpp"}},
       {},
       {},
+      {},
+      {},
+      {},
+      archscope::core::AnalysisScope::module,
   };
 
   const auto metrics = archscope::core::MetricRegistry::with_defaults().compute(
