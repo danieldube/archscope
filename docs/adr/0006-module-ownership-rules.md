@@ -24,7 +24,8 @@ Define module ownership as follows:
   command output metadata. Prefer the target name encoded by a CMake-style
   `CMakeFiles/<target>.dir/...` object path; otherwise use the normalized
   object-output directory; if no output metadata exists, fall back to the
-  source path for that compile command.
+  source path for that compile command. Header-defined types belong to every
+  compilation target whose translation units compile that definition.
 
 System-header declarations are excluded from ownership in all modes.
 
@@ -49,3 +50,6 @@ System-header declarations are excluded from ownership in all modes.
 - Filtering behavior can remain module-kind-specific without changing analysis.
 - Compilation-target mode can legitimately report the same definition in
   multiple modules when that definition is compiled into multiple targets.
+- Compilation-target instability can recover non-zero couplings through shared
+  header-defined types even when those headers do not have direct
+  `compile_commands.json` entries of their own.

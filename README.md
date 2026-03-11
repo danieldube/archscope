@@ -67,6 +67,11 @@ Run a compilation-target report grouped by build target:
   --report=/tmp/archscope-target-report.md
 ```
 
+For that fixture, the refined compilation-target coupling model reports
+`Instability: 0.500` for both `demo_app` and `demo_domain`, because both
+targets compile the shared header-defined `SharedPort` type and therefore
+depend on each other through that shared membership.
+
 ## CLI summary
 
 Canonical form:
@@ -100,6 +105,13 @@ Filter behavior:
 - `header`: substring match on the normalized definition path
 - `compilation_target`: exact match on the emitted target id
 
+Compilation-target coupling behavior:
+
+- target ids come from compile-command output metadata
+- header-defined types can belong to multiple compilation targets
+- `instability` for `compilation_target` uses that shared membership to recover
+  cross-target couplings even when the header itself has no compile-db entry
+
 Exit codes:
 
 - `0`: success
@@ -129,7 +141,9 @@ analysis graph. `--threads=<n>` runs per-translation-unit extraction in
 parallel while preserving deterministic output ordering. Compilation-target
 ownership is derived from each compile command's object output metadata,
 preferring CMake-style `CMakeFiles/<target>.dir/...` target names when
-available.
+available. Header-defined types can belong to multiple compilation targets when
+multiple targets compile them, and compilation-target instability uses that
+membership to recover cross-target couplings for shared headers.
 
 ## Documentation map
 

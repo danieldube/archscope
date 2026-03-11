@@ -31,6 +31,13 @@ writes a deterministic Markdown report.
 
 Metrics are emitted in the same order they are requested on the CLI.
 
+Metric notes:
+
+- `instability` for `--module=compilation_target` uses compilation-target
+  membership for header-defined types. If two targets both compile the same
+  header-defined API type, ArchScope can emit couplings between those targets
+  even though the header has no direct `compile_commands.json` entry.
+
 ## Options
 
 - `--module=<kind>`: required; one of `translation_unit`, `namespace`, or
@@ -59,7 +66,8 @@ Metrics are emitted in the same order they are requested on the CLI.
   compile command output metadata; CMake-style
   `CMakeFiles/<target>.dir/...` outputs emit `<target>`, otherwise ArchScope
   falls back to the normalized object-output directory or source path;
-  `--module-filter` uses exact matching
+  header-defined types can belong to multiple compilation targets when multiple
+  targets compile them, and `--module-filter` uses exact matching
 
 ## Examples
 
@@ -96,6 +104,15 @@ Compilation-target report:
   type_count distance_from_main_sequence \
   --module=compilation_target --report=/tmp/target-report.md
 ```
+
+That fixture currently produces:
+
+- `demo_app` with `Abstractness: 0.333`, `Instability: 0.500`,
+  `Abstract Types: 1`, `Concrete Types: 2`, `Types: 3`, and
+  `Distance from the Main Sequence: 0.167`
+- `demo_domain` with `Abstractness: 0.500`, `Instability: 0.500`,
+  `Abstract Types: 1`, `Concrete Types: 1`, `Types: 2`, and
+  `Distance from the Main Sequence: 0.000`
 
 Translation-unit report with explicit thread count:
 
@@ -189,6 +206,11 @@ analysis stage the command is currently executing.
 - No modules in the report
   Check whether `--module-filter` excluded every emitted module. Filtering is
   applied after analysis, so the filter only affects report output.
+- Unexpectedly low `instability` for `--module=compilation_target`
+  ArchScope can only emit cross-target couplings for types whose definition
+  paths can be associated with one or more compilation targets. If a target
+  does not compile a referenced definition path anywhere in the database, that
+  dependency cannot contribute to `Ce`/`Ca`.
 - LLVM/Clang packages not found during configure
   Install the development packages listed in `README.md` and rerun CMake, or
   pass `-DARCHSCOPE_LLVM_VERSION=<version>` to point CMake at the intended

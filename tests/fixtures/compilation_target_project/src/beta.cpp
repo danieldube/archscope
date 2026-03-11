@@ -1,4 +1,5 @@
-struct Beta {
-  virtual ~Beta() = default;
-  virtual void run() = 0;
+#include "../include/shared.hpp"
+
+struct Beta final {
+  SharedPort *dependency = nullptr;
 };

@@ -141,6 +141,7 @@ TEST_CASE("analysis projection uses definition paths for header dependencies",
 TEST_CASE("analysis projection groups extracted data by compilation target "
           "ownership",
           "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedDependency;
   using archscope::clang_backend::ExtractedType;
   using archscope::core::ModuleId;
   using archscope::core::ModuleKind;
@@ -176,4 +177,42 @@ TEST_CASE("analysis projection groups extracted data by compilation target "
   REQUIRE(analysis.graph.outgoing.at(ModuleId{"demo_app"}) ==
           std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
               ModuleId{"demo_domain"}});
+}
+
+TEST_CASE("analysis projection derives compilation target dependencies for "
+          "header-defined types from target membership",
+          "[analysis][projection]") {
+  using archscope::clang_backend::ExtractedDependency;
+  using archscope::clang_backend::ExtractedType;
+  using archscope::core::ModuleId;
+  using archscope::core::ModuleKind;
+
+  const archscope::clang_backend::ExtractionResult extraction{
+      {
+          {"src/alpha.cpp", "include/shared.hpp", "demo_app", "sample",
+           "sample::SharedPort", true},
+          {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample",
+           "sample::Alpha", false},
+          {"src/beta.cpp", "include/shared.hpp", "demo_domain", "sample",
+           "sample::SharedPort", true},
+          {"src/beta.cpp", "src/beta.cpp", "demo_domain", "sample",
+           "sample::Beta", false},
+      },
+      {
+          {"src/alpha.cpp", "src/alpha.cpp", "demo_app", "sample", "",
+           "include/shared.hpp", "", "sample", false},
+          {"src/beta.cpp", "src/beta.cpp", "demo_domain", "sample", "",
+           "include/shared.hpp", "", "sample", false},
+      },
+  };
+
+  const auto analysis = archscope::clang_backend::project_analysis(
+      extraction, ModuleKind::compilation_target);
+
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"demo_app"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"demo_domain"}});
+  REQUIRE(analysis.graph.outgoing.at(ModuleId{"demo_domain"}) ==
+          std::unordered_set<ModuleId, archscope::core::ModuleIdHash>{
+              ModuleId{"demo_app"}});
 }

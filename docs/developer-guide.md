@@ -111,7 +111,13 @@ observe stale binaries.
   remain deterministic.
 - Compilation-target ownership is intentionally per compile command. If the
   same definition is compiled into multiple targets, it can appear once per
-  target in `--module=compilation_target` output.
+  target in `--module=compilation_target` output, and compilation-target
+  dependency projection uses that shared membership to recover cross-target
+  edges for header-defined types.
+- The compilation-target projection builds a definition-path to target-membership
+  index from extracted types, then uses that index to expand header-defined
+  dependencies across all matching targets before the core dependency graph is
+  assembled.
 
 ## Adding a new metric
 

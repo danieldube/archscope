@@ -71,9 +71,9 @@ distance_from_main_sequence --module=namespace \
 - `--module-filter=<string>`
   - If `--module=namespace`: filter module names by **prefix match** (e.g.,
     `my::ns` matches `my::ns`, `my::ns::detail`).
-  - If `--module=translation_unit`: filter by file path substring.
-  - If `--module=header`: filter by header path substring.
-  - If `--module=compilation_target`: filter by exact target id.
+- If `--module=translation_unit`: filter by file path substring.
+- If `--module=header`: filter by header path substring.
+- If `--module=compilation_target`: filter by exact target id.
 - `--report=<path>` output Markdown file (default: `architecture-metrics.md` in
   current working directory)
 - `--project-name=<string>` optional override for report header (default:
@@ -167,6 +167,13 @@ We compute dependencies as **set-based** (no multiplicity):
 
 Instability:
 - If `(Ce + Ca) == 0`, define `I = 0.0`.
+
+Compilation-target note:
+- For `--module=compilation_target`, header-defined types may belong to
+  multiple targets if multiple translation units compile that definition.
+- Dependency projection should use that target membership to recover
+  cross-target couplings for shared headers, rather than requiring the header
+  itself to appear as a compile-db entry.
 
 ### 4.4 Distance from main sequence (D)
 - `D = abs(A + I - 1)`

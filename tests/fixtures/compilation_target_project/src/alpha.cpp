@@ -1,14 +1,9 @@
-#include "beta.cpp"
+#include "../include/shared.hpp"
 
-struct AlphaBase {
-  virtual ~AlphaBase() = default;
-  virtual void tick() = 0;
-};
+struct Alpha final : SharedPort {
+  SharedPort *member = nullptr;
 
-struct Alpha final : AlphaBase {
-  Beta *member = nullptr;
+  SharedPort *make(SharedPort *value) { return value; }
 
-  Beta *make(Beta *value) { return value; }
-
-  void tick() override {}
+  void run() override {}
 };
