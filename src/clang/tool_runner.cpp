@@ -273,8 +273,7 @@ void collect_dependencies_from_type(
 
 class AnalysisCollector : public clang::RecursiveASTVisitor<AnalysisCollector> {
 public:
-  AnalysisCollector(ASTContext &context,
-                    std::string translation_unit_path,
+  AnalysisCollector(ASTContext &context, std::string translation_unit_path,
                     const TranslationUnitPathMap &translation_unit_paths,
                     ExtractionResult &result)
       : context_(context),

@@ -28,8 +28,7 @@ std::string resolve_namespace_module(const clang::Decl &declaration) {
 
   const DeclContext *context = declaration.getDeclContext();
   while (context != nullptr) {
-    if (const auto *namespace_decl =
-            llvm::dyn_cast<NamespaceDecl>(context)) {
+    if (const auto *namespace_decl = llvm::dyn_cast<NamespaceDecl>(context)) {
       components.push_back(namespace_component(*namespace_decl));
     }
     context = context->getParent();

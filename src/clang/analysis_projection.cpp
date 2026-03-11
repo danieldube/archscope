@@ -32,10 +32,9 @@ select_dependency(const ExtractedDependency &dependency,
                   const ModuleKind module_kind) {
   switch (module_kind) {
   case ModuleKind::namespace_module:
-    return DependencyCandidate{
-        ModuleId{dependency.from_namespace_module},
-        ModuleId{dependency.target_namespace_module},
-        dependency.is_system};
+    return DependencyCandidate{ModuleId{dependency.from_namespace_module},
+                               ModuleId{dependency.target_namespace_module},
+                               dependency.is_system};
   case ModuleKind::translation_unit:
     if (dependency.from_translation_unit_path.empty() ||
         dependency.target_translation_unit_path.empty()) {
@@ -46,10 +45,9 @@ select_dependency(const ExtractedDependency &dependency,
         ModuleId{dependency.target_translation_unit_path},
         dependency.is_system};
   case ModuleKind::header:
-    return DependencyCandidate{
-        ModuleId{dependency.from_definition_path},
-        ModuleId{dependency.target_definition_path},
-        dependency.is_system};
+    return DependencyCandidate{ModuleId{dependency.from_definition_path},
+                               ModuleId{dependency.target_definition_path},
+                               dependency.is_system};
   }
 
   throw std::invalid_argument("unsupported module kind");
