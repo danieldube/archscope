@@ -229,14 +229,14 @@ Resolve referenced decl location → owner module.
 
 ## Increment 9 — Documentation + ADR completion
 
-### Task 9.1 — User manual
+### Task 9.1 — User manual [completed]
 - Add full CLI docs, examples for all module kinds, troubleshooting.
 
-### Task 9.2 — Developer guide
+### Task 9.2 — Developer guide [completed]
 - Adding a new metric walkthrough.
 - Adding a new dependency extractor rule.
 
-### Task 9.3 — ADR set
+### Task 9.3 — ADR set [completed]
 Required ADRs (minimum):
 - ADR: Use Clang LibTooling (vs plugin/libclang)
 - ADR: Module ownership rules (namespace/TU/header)

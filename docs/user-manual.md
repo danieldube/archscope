@@ -1,26 +1,60 @@
 # User Manual
 
-## Supported commands
+## Overview
+
+`archscope` analyzes a project through its `compile_commands.json`, groups the
+discovered types into modules, computes Robert C. Martin package metrics, and
+writes a deterministic Markdown report.
+
+## Command reference
 
 `archscope --help`
-: Print the currently supported command-line options.
+: Print usage, supported metrics, and supported options.
 
 `archscope --version`
-: Print the bootstrap version string.
+: Print the executable version string.
 
 `archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>]`
 : Load the compilation database, group results by translation unit, namespace,
   or header definition file, optionally filter the emitted module list, and
-  write a Markdown report with computed metric values in the exact order
-  requested on the command line.
+  write a Markdown report with metric values in the exact order requested on
+  the command line.
 
-Supported metric ids for this increment:
+## Metrics
 
 - `abstractness`
 - `instability`
 - `distance_from_main_sequence`
 
-Example:
+Metrics are emitted in the same order they are requested on the CLI.
+
+## Options
+
+- `--module=<kind>`: required; one of `translation_unit`, `namespace`, or
+  `header`
+- `--module-filter=<text>`: optional output filter; analysis still runs over
+  the full project graph
+- `--report=<path>`: output Markdown file path; defaults to
+  `architecture-metrics.md`
+- `--project-name=<name>`: optional report header override
+- `--threads=<n>`: optional parallelism request; values are clamped into the
+  valid runtime range
+- `--help`: print usage and exit
+- `--version`: print version and exit
+
+## Module kinds and filtering
+
+- `translation_unit`: module owner is the translation-unit source file path;
+  `--module-filter` uses substring matching on that path
+- `namespace`: module owner is the fully qualified namespace; global scope is
+  `<global>`, anonymous namespaces are emitted as `<anonymous>` within their
+  parent scope; `--module-filter` uses prefix matching
+- `header`: module owner is the normalized spelling path of the definition
+  file; `--module-filter` uses substring matching on the normalized path
+
+## Examples
+
+Translation-unit report:
 
 ```bash
 ./build/archscope tests/fixtures/placeholder_project/compile_commands.json \
@@ -28,7 +62,7 @@ Example:
   --report=architecture-metrics.md
 ```
 
-Namespace filtering example:
+Namespace report with filtering:
 
 ```bash
 ./build/archscope tests/fixtures/namespace_project/compile_commands.json \
@@ -36,13 +70,44 @@ Namespace filtering example:
   --report=/tmp/namespace-report.md
 ```
 
-Filtering rules in the current build:
+Header report with normalized-path filtering:
 
-- `--module=namespace`: prefix match, so `a::b` matches `a::b` and
-  `a::b::detail`
-- `--module=translation_unit`: substring match on the module path
-- `--module=header`: substring match on the normalized header/source
-  definition path
+```bash
+./build/archscope tests/fixtures/header_project/compile_commands.json \
+  abstractness instability --module=header \
+  --module-filter=include/domain/../domain/alpha.hpp \
+  --report=/tmp/header-report.md
+```
+
+Translation-unit report with explicit thread count:
+
+```bash
+./build/archscope tests/fixtures/parallel_project/compile_commands.json \
+  abstractness instability distance_from_main_sequence \
+  --module=translation_unit --threads=4 \
+  --report=/tmp/parallel-report.md
+```
+
+## Report format
+
+The generated Markdown always uses stable ordering:
+
+- modules sorted lexicographically by their emitted id
+- metrics listed in CLI request order
+- numbers formatted with three decimal places
+
+Minimum report structure:
+
+```md
+**project-name**
+
+module-id:
+ * Abstractness: 0.500
+ * Instability: 0.250
+ * Distance from the Main Sequence: 0.250
+```
+
+## Fixture-backed examples
 
 The current translation-unit distance fixture produces:
 
@@ -59,30 +124,33 @@ You can run that fixture directly from the repository root:
   --module=translation_unit --report=/tmp/distance-report.md
 ```
 
-The current build supports `--threads=<n>` for parallel per-translation-unit
-analysis. The value is clamped to the available translation-unit count, and the
-determinism system coverage uses a larger fixture with overlapping
-translation-unit, namespace, and header ownership. It compares repeated
-`--threads=1` and `--threads=4` runs byte-for-byte across all three module
-kinds.
+The parallel determinism fixture compares repeated `--threads=1` and
+`--threads=4` runs byte-for-byte for translation-unit, namespace, and header
+reports.
 
-You can also run the header filter fixture directly:
+## Troubleshooting
 
-```bash
-./build/archscope tests/fixtures/header_project/compile_commands.json \
-  abstractness instability --module=header \
-  --module-filter=include/domain/../domain/alpha.hpp \
-  --report=/tmp/header-report.md
-```
-
-## Implementation note
-
-This increment requires Clang LibTooling development packages because the
-analysis pipeline parses translation units, enumerates class/struct
-definitions, assigns translation-unit, namespace, and header ownership,
-extracts outgoing dependencies from base classes, fields, and function
-signatures, and combines those pure computations into `A`, `I`, and `D` for
-each reported module.
+- `error: missing required option: --module=<kind>`
+  Provide `--module=translation_unit`, `--module=namespace`, or
+  `--module=header`.
+- `error: unsupported metric: <name>`
+  Use one or more of `abstractness`, `instability`, and
+  `distance_from_main_sequence`.
+- Exit code `3`
+  The compilation database could not be read or parsed. Verify the path points
+  to a valid `compile_commands.json` and that relative `directory` values are
+  correct relative to the database file.
+- Exit code `4`
+  Clang failed to parse at least one translation unit. Rebuild the target
+  project’s compile database and confirm the listed source file still compiles
+  with the recorded arguments.
+- No modules in the report
+  Check whether `--module-filter` excluded every emitted module. Filtering is
+  applied after analysis, so the filter only affects report output.
+- LLVM/Clang packages not found during configure
+  Install the development packages listed in `README.md` and rerun CMake, or
+  pass `-DARCHSCOPE_LLVM_VERSION=<version>` to point CMake at the intended
+  installation.
 
 ## Build and test
 
