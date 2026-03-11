@@ -6,9 +6,8 @@
 TEST_CASE("abstractness is zero for an empty module",
           "[metrics][abstractness]") {
   const archscope::core::AnalysisResult result{
-      {archscope::core::ModuleId{"src/empty.cpp"}},
-      {},
-      {},
+      {archscope::core::ModuleId{"src/empty.cpp"}}, {}, {}, {}, {}, {},
+      archscope::core::AnalysisScope::module,
   };
 
   REQUIRE(archscope::core::compute_abstractness(
