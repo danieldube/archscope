@@ -62,7 +62,7 @@ add_library(ArchScope::core ALIAS archscope_core)
 add_library(
   archscope_clang STATIC
   src/clang/analysis_projection.cpp src/clang/namespace_module_resolver.cpp
-  src/clang/tool_runner.cpp)
+  src/clang/parallel_executor.cpp src/clang/tool_runner.cpp)
 add_library(ArchScope::clang ALIAS archscope_clang)
 
 target_include_directories(archscope_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
@@ -96,6 +96,7 @@ if(BUILD_TESTING)
     tests/unit/metric_registry_tests.cpp
     tests/unit/module_filter_tests.cpp
     tests/unit/namespace_module_resolver_tests.cpp
+    tests/unit/parallel_executor_tests.cpp
     tests/unit/report_writer_tests.cpp
     tests/unit/version_tests.cpp)
   target_include_directories(archscope_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)

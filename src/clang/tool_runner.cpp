@@ -1,5 +1,6 @@
 #include "clang/tool_runner.hpp"
 #include "clang/namespace_module_resolver.hpp"
+#include "clang/parallel_executor.hpp"
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
@@ -15,14 +16,11 @@
 #include <llvm/ADT/StringRef.h>
 
 #include <algorithm>
-#include <atomic>
 #include <filesystem>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
-#include <thread>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -502,36 +500,17 @@ extract_analysis(const core::CompilationDatabase &database,
       database.entries.size());
   std::vector<std::optional<ToolRunnerError>> per_entry_errors(
       database.entries.size());
-  std::atomic<std::size_t> next_index{0U};
-  std::mutex result_mutex;
-
-  auto worker = [&database, &translation_unit_paths, &per_entry_results,
-                 &per_entry_errors, &next_index, &result_mutex]() {
-    while (true) {
-      const std::size_t index = next_index.fetch_add(1U);
-      if (index >= database.entries.size()) {
-        return;
-      }
-
-      const auto extracted = extract_translation_unit(database.entries[index],
-                                                      translation_unit_paths);
-      std::lock_guard<std::mutex> lock(result_mutex);
-      if (extracted.has_value()) {
-        per_entry_results[index] = extracted.value();
-      } else {
-        per_entry_errors[index] = extracted.error();
-      }
-    }
-  };
-
-  std::vector<std::thread> workers;
-  workers.reserve(worker_count);
-  for (unsigned worker_index = 0; worker_index < worker_count; ++worker_index) {
-    workers.emplace_back(worker);
-  }
-  for (std::thread &worker_thread : workers) {
-    worker_thread.join();
-  }
+  run_in_parallel(database.entries.size(), worker_count,
+                  [&database, &translation_unit_paths, &per_entry_results,
+                   &per_entry_errors](const std::size_t index) {
+                    const auto extracted = extract_translation_unit(
+                        database.entries[index], translation_unit_paths);
+                    if (extracted.has_value()) {
+                      per_entry_results[index] = extracted.value();
+                    } else {
+                      per_entry_errors[index] = extracted.error();
+                    }
+                  });
 
   std::vector<std::string> failed_translation_units;
   for (std::size_t index = 0; index < per_entry_errors.size(); ++index) {
