@@ -10,7 +10,10 @@ namespace archscope::clang_backend {
 
 namespace {
 
-std::string namespace_component(const clang::NamespaceDecl &declaration) {
+using clang::DeclContext;
+using clang::NamespaceDecl;
+
+std::string namespace_component(const NamespaceDecl &declaration) {
   if (declaration.isAnonymousNamespace()) {
     return "<anonymous>";
   }
@@ -23,10 +26,9 @@ std::string namespace_component(const clang::NamespaceDecl &declaration) {
 std::string resolve_namespace_module(const clang::Decl &declaration) {
   std::vector<std::string> components;
 
-  const clang::DeclContext *context = declaration.getDeclContext();
+  const DeclContext *context = declaration.getDeclContext();
   while (context != nullptr) {
-    if (const auto *namespace_decl =
-            llvm::dyn_cast<clang::NamespaceDecl>(context)) {
+    if (const auto *namespace_decl = llvm::dyn_cast<NamespaceDecl>(context)) {
       components.push_back(namespace_component(*namespace_decl));
     }
     context = context->getParent();

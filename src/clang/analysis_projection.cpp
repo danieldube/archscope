@@ -9,43 +9,45 @@ namespace archscope::clang_backend {
 
 namespace {
 
+using core::DependencyCandidate;
+using core::ModuleId;
+using core::ModuleKind;
+
 core::ModuleId select_module(const ExtractedType &type,
-                             const core::ModuleKind module_kind) {
+                             const ModuleKind module_kind) {
   switch (module_kind) {
-  case core::ModuleKind::namespace_module:
-    return core::ModuleId{type.namespace_module};
-  case core::ModuleKind::translation_unit:
-    return core::ModuleId{type.translation_unit_path};
-  case core::ModuleKind::header:
-    return core::ModuleId{type.definition_path};
+  case ModuleKind::namespace_module:
+    return ModuleId{type.namespace_module};
+  case ModuleKind::translation_unit:
+    return ModuleId{type.translation_unit_path};
+  case ModuleKind::header:
+    return ModuleId{type.definition_path};
   }
 
   throw std::invalid_argument("unsupported module kind");
 }
 
-std::optional<core::DependencyCandidate>
+std::optional<DependencyCandidate>
 select_dependency(const ExtractedDependency &dependency,
-                  const core::ModuleKind module_kind) {
+                  const ModuleKind module_kind) {
   switch (module_kind) {
-  case core::ModuleKind::namespace_module:
-    return core::DependencyCandidate{
-        core::ModuleId{dependency.from_namespace_module},
-        core::ModuleId{dependency.target_namespace_module},
-        dependency.is_system};
-  case core::ModuleKind::translation_unit:
+  case ModuleKind::namespace_module:
+    return DependencyCandidate{ModuleId{dependency.from_namespace_module},
+                               ModuleId{dependency.target_namespace_module},
+                               dependency.is_system};
+  case ModuleKind::translation_unit:
     if (dependency.from_translation_unit_path.empty() ||
         dependency.target_translation_unit_path.empty()) {
       return std::nullopt;
     }
-    return core::DependencyCandidate{
-        core::ModuleId{dependency.from_translation_unit_path},
-        core::ModuleId{dependency.target_translation_unit_path},
+    return DependencyCandidate{
+        ModuleId{dependency.from_translation_unit_path},
+        ModuleId{dependency.target_translation_unit_path},
         dependency.is_system};
-  case core::ModuleKind::header:
-    return core::DependencyCandidate{
-        core::ModuleId{dependency.from_definition_path},
-        core::ModuleId{dependency.target_definition_path},
-        dependency.is_system};
+  case ModuleKind::header:
+    return DependencyCandidate{ModuleId{dependency.from_definition_path},
+                               ModuleId{dependency.target_definition_path},
+                               dependency.is_system};
   }
 
   throw std::invalid_argument("unsupported module kind");
@@ -64,7 +66,7 @@ core::AnalysisResult project_analysis(const ExtractionResult &extraction,
                               type.is_abstract, !type.is_abstract});
   }
 
-  std::vector<core::DependencyCandidate> dependencies;
+  std::vector<DependencyCandidate> dependencies;
   dependencies.reserve(extraction.dependencies.size());
 
   for (const auto &dependency : extraction.dependencies) {
