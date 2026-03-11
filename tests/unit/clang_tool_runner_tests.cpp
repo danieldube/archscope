@@ -92,6 +92,22 @@ extract_analysis(const TemporaryProject &project) {
   return extracted.value();
 }
 
+archscope::clang_backend::ExtractionResult
+extract_analysis(const TemporaryProject &project, const unsigned thread_count) {
+  const auto extracted = archscope::clang_backend::extract_analysis(
+      load_database(project), thread_count);
+  const std::string diagnostic =
+      extracted.has_value()
+          ? std::string{}
+          : extracted.error().message + " :: " +
+                (extracted.error().failed_translation_units.empty()
+                     ? std::string{"<none>"}
+                     : extracted.error().failed_translation_units.front());
+  INFO(diagnostic);
+  REQUIRE(extracted.has_value());
+  return extracted.value();
+}
+
 std::string quoted_path(const std::filesystem::path &path) {
   return "\"" + path.string() + "\"";
 }
@@ -258,6 +274,110 @@ TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
           std::vector<std::string>{"src/broken.cpp"});
   REQUIRE(extracted.error().message.find("failed to parse translation unit") !=
           std::string::npos);
+}
+
+TEST_CASE("clang tool runner produces identical results with multiple threads",
+          "[clang][extract][parallel]") {
+  TemporaryProject project("archscope-clang-tool-runner-parallel");
+
+  project.write_file("src/a.cpp", "struct A {};\n");
+  project.write_file("src/b.cpp", "#include \"a.cpp\"\n"
+                                  "struct B {\n"
+                                  "  A dependency;\n"
+                                  "};\n");
+  project.write_file("src/c.cpp", "#include \"b.cpp\"\n"
+                                  "struct C {\n"
+                                  "  B dependency;\n"
+                                  "};\n");
+  project.write_file("src/d.cpp", "#include \"c.cpp\"\n"
+                                  "struct D {\n"
+                                  "  C dependency;\n"
+                                  "};\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/a.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/a.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/b.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/b.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/c.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/c.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/d.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/d.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto serial = extract_analysis(project, 1U);
+  const auto parallel = extract_analysis(project, 4U);
+
+  REQUIRE(parallel.types == serial.types);
+  REQUIRE(parallel.dependencies == serial.dependencies);
+}
+
+TEST_CASE("clang tool runner reports failed translation units in compile "
+          "database order with multiple threads",
+          "[clang][extract][parallel]") {
+  TemporaryProject project("archscope-clang-tool-runner-parallel-failure");
+
+  project.write_file("src/alpha.cpp", "struct Alpha {\n"
+                                      "  int value\n"
+                                      "};\n");
+  project.write_file("src/bravo.cpp", "struct Bravo {};\n");
+  project.write_file("src/charlie.cpp", "struct Charlie {\n"
+                                        "  int value\n"
+                                        "};\n");
+
+  project.write_compile_commands(
+      "[\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/alpha.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/alpha.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/bravo.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", \"src/bravo.cpp\"]\n"
+      "  },\n"
+      "  {\n"
+      "    \"directory\": " +
+      quoted_path(project.root()) +
+      ",\n"
+      "    \"file\": \"src/charlie.cpp\",\n"
+      "    \"arguments\": [\"clang++\", \"-std=c++17\", "
+      "\"src/charlie.cpp\"]\n"
+      "  }\n"
+      "]\n");
+
+  const auto extracted =
+      archscope::clang_backend::extract_analysis(load_database(project), 4U);
+
+  REQUIRE_FALSE(extracted.has_value());
+  REQUIRE(extracted.error().failed_translation_units ==
+          std::vector<std::string>{"src/alpha.cpp", "src/charlie.cpp"});
 }
 
 TEST_CASE("clang tool runner captures header and source definition paths",

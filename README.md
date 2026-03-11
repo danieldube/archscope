@@ -34,6 +34,10 @@ pre-commit run --all-files
 ./build/archscope tests/fixtures/namespace_project/compile_commands.json \
   abstractness instability --module=namespace --module-filter=a::b \
   --report=/tmp/archscope-namespace-report.md
+./build/archscope tests/fixtures/parallel_project/compile_commands.json \
+  abstractness instability distance_from_main_sequence \
+  --module=translation_unit --threads=4 \
+  --report=/tmp/archscope-deterministic-report.md
 ```
 
 ## Current status
@@ -53,7 +57,12 @@ owned by the definition spelling file, system headers are still excluded, and
 header-mode dependency edges use definition paths instead of translation-unit
 paths. Header filtering is now covered end to end as well: `--module=header`
 uses substring matching on normalized paths, so relative inputs with `..`
-segments still match the emitted absolute header-module paths.
+segments still match the emitted absolute header-module paths. The CLI now also
+accepts `--threads=<n>`, clamps it to the available TU count, and now runs
+per-translation-unit extraction in parallel with deterministic merged output.
+Determinism coverage uses a larger multi-TU fixture and compares repeated
+`--threads=1` and `--threads=4` runs for translation-unit, namespace, and
+header reports.
 
 ## Repository layout
 

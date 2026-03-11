@@ -1,0 +1,56 @@
+[
+  {
+    "directory": ".",
+    "file": "src/domain/order.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/domain/order.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/domain/user.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/domain/user.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/domain/session.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/domain/session.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/app/facade.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/app/facade.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/adapters/http.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/adapters/http.cpp"
+    ]
+  },
+  {
+    "directory": ".",
+    "file": "src/adapters/cli.cpp",
+    "arguments": [
+      "clang++",
+      "-std=c++17",
+      "src/adapters/cli.cpp"
+    ]
+  }
+]

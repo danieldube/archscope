@@ -95,8 +95,18 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
 - Header filters normalize both the emitted module path and the filter text
   with `std::filesystem::path::lexically_normal()` before performing substring
   matching.
+- `src/cli/main.cpp` parses `--threads=<n>` and passes the clamped value into
+  the Clang extraction layer.
+- `tests/system/check_parallel_determinism.cmake` now drives a larger
+  `tests/fixtures/parallel_project/` fixture and compares repeated report bytes
+  from `--threads=1` and `--threads=4` for translation-unit, namespace, and
+  header modes, which gives Task 8.2 good coverage for aggregation and ordering
+  races.
+- `src/clang/tool_runner.*` now runs independent translation units on a small
+  worker pool, stores per-entry results in compile-database order, and merges
+  them after all workers finish so the final extracted types and dependencies
+  remain deterministic.
 
 ## Next implementation steps
 
-The next open increment adds parallel execution while keeping output fully
-deterministic.
+The next open increment is Increment 9: documentation and ADR completion.

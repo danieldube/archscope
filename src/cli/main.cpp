@@ -13,9 +13,43 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
+
+unsigned default_thread_count() {
+  const unsigned detected = std::thread::hardware_concurrency();
+  return detected == 0U ? 1U : detected;
+}
+
+unsigned clamp_thread_count(const unsigned requested) {
+  const unsigned maximum = default_thread_count();
+  if (requested == 0U) {
+    return 1U;
+  }
+  return std::min(requested, maximum);
+}
+
+std::optional<unsigned> parse_thread_count(const std::string &value) {
+  if (value.empty()) {
+    return std::nullopt;
+  }
+
+  std::size_t parsed_length = 0U;
+  unsigned long requested = 0;
+  try {
+    requested = std::stoul(value, &parsed_length);
+  } catch (const std::exception &) {
+    return std::nullopt;
+  }
+
+  if (parsed_length != value.size()) {
+    return std::nullopt;
+  }
+
+  return clamp_thread_count(static_cast<unsigned>(requested));
+}
 
 struct CliOptions {
   std::filesystem::path compile_commands_path;
@@ -25,6 +59,7 @@ struct CliOptions {
   std::optional<std::string> module_filter;
   std::filesystem::path report_path = "architecture-metrics.md";
   std::optional<std::string> project_name_override;
+  unsigned threads = default_thread_count();
 };
 
 bool is_option(const std::string &argument) {
@@ -126,6 +161,16 @@ std::optional<CliOptions> parse_cli(const std::vector<std::string> &args,
           argument.substr(std::string("--module-filter=").size());
       continue;
     }
+    if (argument.rfind("--threads=", 0) == 0) {
+      const auto threads =
+          parse_thread_count(argument.substr(std::string("--threads=").size()));
+      if (!threads.has_value()) {
+        error_message = "invalid thread count";
+        return std::nullopt;
+      }
+      options.threads = *threads;
+      continue;
+    }
 
     error_message = "unsupported option: " + argument;
     return std::nullopt;
@@ -181,8 +226,8 @@ int run_cli(const std::vector<std::string> &args) {
     return 3;
   }
 
-  const auto extracted_analysis =
-      archscope::clang_backend::extract_analysis(database.value());
+  const auto extracted_analysis = archscope::clang_backend::extract_analysis(
+      database.value(), parsed->threads);
   if (!extracted_analysis.has_value()) {
     std::cerr << "error: " << extracted_analysis.error().message;
     if (!extracted_analysis.error().failed_translation_units.empty()) {

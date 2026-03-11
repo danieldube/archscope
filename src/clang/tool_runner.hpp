@@ -79,6 +79,7 @@ private:
 };
 
 Result<ExtractionResult>
-extract_analysis(const core::CompilationDatabase &database);
+extract_analysis(const core::CompilationDatabase &database,
+                 unsigned thread_count = 1U);
 
 } // namespace archscope::clang_backend

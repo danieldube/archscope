@@ -211,11 +211,11 @@ Resolve referenced decl location → owner module.
 
 ## Increment 8 — Parallel execution + determinism
 
-### Task 8.1 — Tests first: determinism under parallelism
+### Task 8.1 — Tests first: determinism under parallelism [completed]
 - System test runs `archscope` twice with `--threads=1` and `--threads=4`;
   outputs must match.
 
-### Task 8.2 — Implement thread pool execution
+### Task 8.2 — Implement thread pool execution [completed]
 - Parallelize per-TU processing.
 - Aggregate results with deterministic ordering.
 

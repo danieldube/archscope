@@ -15,11 +15,14 @@
 #include <llvm/ADT/StringRef.h>
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -423,6 +426,33 @@ private:
   ExtractionResult &result_;
 };
 
+Result<ExtractionResult>
+extract_translation_unit(const core::CompilationDatabaseEntry &entry,
+                         const TranslationUnitPathMap &translation_unit_paths) {
+  ExtractionResult result;
+  CoreCompilationDatabase compilation_database(
+      core::CompilationDatabase{{entry}});
+  const std::string translation_unit_path = entry.source_path;
+  const std::string resolved_translation_unit_path =
+      resolve_path(entry, entry.source_path);
+  clang::tooling::ClangTool tool(compilation_database,
+                                 {resolved_translation_unit_path});
+  CountingDiagConsumer diagnostics;
+  tool.setDiagnosticConsumer(&diagnostics);
+  tool.appendArgumentsAdjuster(clang::tooling::getClangSyntaxOnlyAdjuster());
+  tool.appendArgumentsAdjuster(clang::tooling::getClangStripOutputAdjuster());
+
+  AnalysisCollectingActionFactory factory(translation_unit_path,
+                                          translation_unit_paths, result);
+  const int tool_result = tool.run(&factory);
+  if (tool_result != 0 || diagnostics.error_count() > 0U) {
+    return Result<ExtractionResult>::failure(
+        {"failed to parse translation unit", {translation_unit_path}});
+  }
+
+  return Result<ExtractionResult>::success(std::move(result));
+}
+
 void sort_extracted_types(std::vector<ExtractedType> &types) {
   std::sort(types.begin(), types.end(),
             [](const ExtractedType &left, const ExtractedType &right) {
@@ -452,9 +482,8 @@ void sort_extracted_dependencies(
 } // namespace
 
 Result<ExtractionResult>
-extract_analysis(const core::CompilationDatabase &database) {
-  CoreCompilationDatabase compilation_database(database);
-  ExtractionResult result;
+extract_analysis(const core::CompilationDatabase &database,
+                 unsigned thread_count) {
   TranslationUnitPathMap translation_unit_paths;
 
   for (const auto &entry : database.entries) {
@@ -462,24 +491,74 @@ extract_analysis(const core::CompilationDatabase &database) {
                                    entry.source_path);
   }
 
-  for (const auto &entry : database.entries) {
-    const std::string translation_unit_path = entry.source_path;
-    const std::string resolved_translation_unit_path =
-        resolve_path(entry, entry.source_path);
-    clang::tooling::ClangTool tool(compilation_database,
-                                   {resolved_translation_unit_path});
-    CountingDiagConsumer diagnostics;
-    tool.setDiagnosticConsumer(&diagnostics);
-    tool.appendArgumentsAdjuster(clang::tooling::getClangSyntaxOnlyAdjuster());
-    tool.appendArgumentsAdjuster(clang::tooling::getClangStripOutputAdjuster());
+  if (database.entries.empty()) {
+    return Result<ExtractionResult>::success(ExtractionResult{});
+  }
 
-    AnalysisCollectingActionFactory factory(translation_unit_path,
-                                            translation_unit_paths, result);
-    const int tool_result = tool.run(&factory);
-    if (tool_result != 0 || diagnostics.error_count() > 0U) {
-      return Result<ExtractionResult>::failure(
-          {"failed to parse translation unit", {translation_unit_path}});
+  const unsigned worker_count =
+      std::max(1U, std::min(thread_count,
+                            static_cast<unsigned>(database.entries.size())));
+  std::vector<std::optional<ExtractionResult>> per_entry_results(
+      database.entries.size());
+  std::vector<std::optional<ToolRunnerError>> per_entry_errors(
+      database.entries.size());
+  std::atomic<std::size_t> next_index{0U};
+  std::mutex result_mutex;
+
+  auto worker = [&database, &translation_unit_paths, &per_entry_results,
+                 &per_entry_errors, &next_index, &result_mutex]() {
+    while (true) {
+      const std::size_t index = next_index.fetch_add(1U);
+      if (index >= database.entries.size()) {
+        return;
+      }
+
+      const auto extracted = extract_translation_unit(database.entries[index],
+                                                      translation_unit_paths);
+      std::lock_guard<std::mutex> lock(result_mutex);
+      if (extracted.has_value()) {
+        per_entry_results[index] = extracted.value();
+      } else {
+        per_entry_errors[index] = extracted.error();
+      }
     }
+  };
+
+  std::vector<std::thread> workers;
+  workers.reserve(worker_count);
+  for (unsigned worker_index = 0; worker_index < worker_count; ++worker_index) {
+    workers.emplace_back(worker);
+  }
+  for (std::thread &worker_thread : workers) {
+    worker_thread.join();
+  }
+
+  std::vector<std::string> failed_translation_units;
+  for (std::size_t index = 0; index < per_entry_errors.size(); ++index) {
+    if (!per_entry_errors[index].has_value()) {
+      continue;
+    }
+    failed_translation_units.insert(
+        failed_translation_units.end(),
+        per_entry_errors[index]->failed_translation_units.begin(),
+        per_entry_errors[index]->failed_translation_units.end());
+  }
+  if (!failed_translation_units.empty()) {
+    return Result<ExtractionResult>::failure(
+        {"failed to parse translation unit", failed_translation_units});
+  }
+
+  ExtractionResult result;
+  for (std::size_t index = 0; index < per_entry_results.size(); ++index) {
+    if (!per_entry_results[index].has_value()) {
+      continue;
+    }
+    result.types.insert(result.types.end(),
+                        per_entry_results[index]->types.begin(),
+                        per_entry_results[index]->types.end());
+    result.dependencies.insert(result.dependencies.end(),
+                               per_entry_results[index]->dependencies.begin(),
+                               per_entry_results[index]->dependencies.end());
   }
 
   sort_extracted_types(result.types);

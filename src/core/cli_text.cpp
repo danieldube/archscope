@@ -6,7 +6,8 @@ namespace archscope::core {
 
 std::string help_text() {
   return "Usage: archscope <compile_commands.json> <metrics...> "
-         "--module=<kind> [--report=<path>] [--project-name=<name>]\n"
+         "--module=<kind> [--report=<path>] [--project-name=<name>] "
+         "[--threads=<n>]\n"
          "       archscope [--help] [--version]\n"
          "\n"
          "Supported metric ids: abstractness, instability, "
@@ -21,6 +22,8 @@ std::string help_text() {
          "  --report=<path>         Output Markdown report path.\n"
          "  --project-name=<name>   Override the project name shown in the "
          "report.\n"
+         "  --threads=<n>           Requested analysis parallelism for "
+         "per-translation-unit extraction.\n"
          "  --help                  Show this help message and exit.\n"
          "  --version               Show the executable version and exit.\n";
 }

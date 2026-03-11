@@ -8,7 +8,7 @@
 `archscope --version`
 : Print the bootstrap version string.
 
-`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>]`
+`archscope <compile_commands.json> <metrics...> --module=<namespace|translation_unit|header> [--module-filter=<text>] [--report=<path>] [--project-name=<name>] [--threads=<n>]`
 : Load the compilation database, group results by translation unit, namespace,
   or header definition file, optionally filter the emitted module list, and
   write a Markdown report with computed metric values in the exact order
@@ -58,6 +58,13 @@ You can run that fixture directly from the repository root:
   abstractness instability distance_from_main_sequence \
   --module=translation_unit --report=/tmp/distance-report.md
 ```
+
+The current build supports `--threads=<n>` for parallel per-translation-unit
+analysis. The value is clamped to the available translation-unit count, and the
+determinism system coverage uses a larger fixture with overlapping
+translation-unit, namespace, and header ownership. It compares repeated
+`--threads=1` and `--threads=4` runs byte-for-byte across all three module
+kinds.
 
 You can also run the header filter fixture directly:
 
