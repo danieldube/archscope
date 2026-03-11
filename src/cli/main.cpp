@@ -22,7 +22,10 @@ namespace {
 
 unsigned DefaultThreadCount() {
   const unsigned detected = std::thread::hardware_concurrency();
-  return detected == 0U ? 1U : detected;
+  if (detected == 0U) {
+    return 1U;
+  }
+  return detected;
 }
 
 unsigned ClampThreadCount(const unsigned requested) {
@@ -247,7 +250,11 @@ std::string ModuleKindName(const archscope::core::ModuleKind module_kind) {
 std::string CountLabel(const std::size_t count, const char *singular,
                        const char *plural) {
   std::ostringstream stream;
-  stream << count << ' ' << (count == 1U ? singular : plural);
+  const char *label = plural;
+  if (count == 1U) {
+    label = singular;
+  }
+  stream << count << ' ' << label;
   return stream.str();
 }
 
@@ -353,7 +360,11 @@ int RunCli(const std::vector<std::string> &args) {
 int main(int argc, char **argv) {
   try {
     std::vector<std::string> args;
-    args.reserve(static_cast<std::size_t>(argc > 0 ? argc - 1 : 0));
+    std::size_t argument_count = 0U;
+    if (argc > 0) {
+      argument_count = static_cast<std::size_t>(argc - 1);
+    }
+    args.reserve(argument_count);
     for (int index = 1; index < argc; ++index) {
       args.emplace_back(argv[index]);
     }

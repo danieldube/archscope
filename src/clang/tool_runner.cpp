@@ -247,8 +247,10 @@ void collect_dependencies_from_type(
   const clang::QualType desugared = type.getDesugaredType(context);
   if (const auto *record = desugared->getAsCXXRecordDecl()) {
     const clang::CXXRecordDecl *definition = record->getDefinition();
-    const clang::NamedDecl *target =
-        definition != nullptr ? definition : record;
+    const clang::NamedDecl *target = record;
+    if (definition != nullptr) {
+      target = definition;
+    }
     const auto dependency =
         make_dependency(context.getSourceManager(), translation_unit_paths,
                         translation_unit_path, from_definition_path,
