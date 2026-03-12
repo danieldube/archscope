@@ -16,8 +16,8 @@ of these AST constructs:
 
 - base classes
 - field member types
-- function return types
-- function parameter types
+- function return types for class member functions
+- function parameter types for class member functions
 - template type arguments reachable through those types
 
 Apply these exclusions:
@@ -26,6 +26,7 @@ Apply these exclusions:
 - ignore duplicate edges
 - ignore built-in types
 - ignore declarations from system headers
+- ignore free-function signatures (global/namespace scope) for class-level dependency metadata
 - ignore invalid macro-only locations
 - ignore `using` declarations and directives for dependency purposes
 
