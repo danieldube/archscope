@@ -52,6 +52,7 @@ add_library(
   archscope_core STATIC
   src/core/analysis.cpp
   src/core/cli_text.cpp
+  src/core/cli_tokens.cpp
   src/core/compilation_database.cpp
   src/core/metrics.cpp
   src/core/module_filter.cpp
@@ -88,6 +89,7 @@ if(BUILD_TESTING)
     tests/unit/analysis_result_tests.cpp
     tests/unit/analysis_projection_tests.cpp
     tests/unit/cli_text_tests.cpp
+    tests/unit/cli_tokens_tests.cpp
     tests/unit/clang_tool_runner_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
     tests/unit/dependency_graph_builder_tests.cpp
