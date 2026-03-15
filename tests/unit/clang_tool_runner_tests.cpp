@@ -290,10 +290,10 @@ TEST_CASE("clang tool runner reports analysis failures", "[clang][extract]") {
       archscope::clang_backend::extract_analysis(load_database(project));
 
   REQUIRE_FALSE(extracted.has_value());
+  REQUIRE(extracted.error().message == "failed to parse translation unit");
   REQUIRE(extracted.error().failed_translation_units ==
           std::vector<std::string>{"src/broken.cpp"});
-  REQUIRE(extracted.error().message.find("failed to parse translation unit") !=
-          std::string::npos);
+  REQUIRE(extracted.error().failed_translation_units.size() == 1U);
 }
 
 TEST_CASE("clang tool runner produces identical results with multiple threads",

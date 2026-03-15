@@ -1,10 +1,10 @@
 #pragma once
 
+#include "common/result.hpp"
+
 #include <cstdint>
 #include <filesystem>
-#include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace archscope::core {
@@ -21,34 +21,8 @@ struct CompilationDatabaseError {
   std::string context;
 };
 
-template <typename T> class Result {
-public:
-  static Result success(T value) { return Result(std::move(value)); }
-
-  static Result failure(CompilationDatabaseError error) {
-    return Result(std::move(error));
-  }
-
-  [[nodiscard]] bool has_value() const { return value_.has_value(); }
-
-  [[nodiscard]]
-  const T &value() const {
-    return *value_;
-  }
-
-  [[nodiscard]]
-  const CompilationDatabaseError &error() const {
-    return *error_;
-  }
-
-private:
-  explicit Result(T value) : value_(std::move(value)) {}
-
-  explicit Result(CompilationDatabaseError error) : error_(std::move(error)) {}
-
-  std::optional<T> value_;
-  std::optional<CompilationDatabaseError> error_;
-};
+template <typename T>
+using Result = common::Result<T, CompilationDatabaseError>;
 
 struct CompilationDatabaseEntry {
   std::string source_path;
