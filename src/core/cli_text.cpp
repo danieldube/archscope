@@ -1,35 +1,36 @@
 #include "core/cli_text.hpp"
 
+#include "core/cli_tokens.hpp"
 #include "core/version.hpp"
 
 namespace archscope::core {
 
 std::string HelpText() {
-  return "Usage: archscope <compile_commands.json> <metrics...> "
-         "--module=<kind> [--report=<path>] [--project-name=<name>] "
-         "[--threads=<n>] [--verbose]\n"
-         "       archscope [--help] [--version]\n"
-         "\n"
-         "Supported metric ids: abstractness, instability, "
-         "abstract_type_count, concrete_type_count, type_count, "
-         "distance_from_main_sequence\n"
-         "\n"
-         "Options:\n"
-         "  --module=<kind>         Module kind (supported: namespace, "
-         "translation_unit, header, compilation_target).\n"
-         "  --module-filter=<text>  Filter output modules. Namespace "
-         "filters use prefix matching; translation-unit and header "
-         "filters use substring matching; compilation-target filters "
-         "use exact matching.\n"
-         "  --report=<path>         Output Markdown report path.\n"
-         "  --project-name=<name>   Override the project name shown in the "
-         "report.\n"
-         "  --threads=<n>           Requested analysis parallelism for "
-         "per-translation-unit extraction.\n"
-         "  --verbose               Emit progress logs and extended error "
-         "context to stderr.\n"
-         "  --help                  Show this help message and exit.\n"
-         "  --version               Show the executable version and exit.\n";
+  std::string help =
+      "Usage: archscope <compile_commands.json> <metrics...> "
+      "--module=<kind> [--report=<path>] [--project-name=<name>] "
+      "[--threads=<n>] [--verbose]\n"
+      "       archscope [--help] [--version]\n"
+      "\n";
+  help += "Supported metric ids: " + supported_metrics_text() + "\n";
+  help += "\n"
+          "Options:\n";
+  help += "  --module=<kind>         Module kind (supported: " +
+          supported_module_kinds_text() + ").\n";
+  help += "  --module-filter=<text>  Filter output modules. Namespace "
+          "filters use prefix matching; translation-unit and header "
+          "filters use substring matching; compilation-target filters "
+          "use exact matching.\n"
+          "  --report=<path>         Output Markdown report path.\n"
+          "  --project-name=<name>   Override the project name shown in the "
+          "report.\n"
+          "  --threads=<n>           Requested analysis parallelism for "
+          "per-translation-unit extraction.\n"
+          "  --verbose               Emit progress logs and extended error "
+          "context to stderr.\n"
+          "  --help                  Show this help message and exit.\n"
+          "  --version               Show the executable version and exit.\n";
+  return help;
 }
 
 std::string FormatErrorText(const std::string &category,

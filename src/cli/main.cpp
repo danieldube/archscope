@@ -1,4 +1,5 @@
 #include "core/cli_text.hpp"
+#include "core/cli_tokens.hpp"
 #include "core/compilation_database.hpp"
 #include "core/metrics.hpp"
 #include "core/module_filter.hpp"
@@ -90,46 +91,6 @@ bool IsOption(const std::string &argument) {
   return argument.rfind("--", 0) == 0;
 }
 
-std::optional<archscope::core::MetricId>
-ParseMetricId(const std::string &value) {
-  if (value == "abstractness") {
-    return archscope::core::MetricId::abstractness;
-  }
-  if (value == "instability") {
-    return archscope::core::MetricId::instability;
-  }
-  if (value == "abstract_type_count") {
-    return archscope::core::MetricId::abstract_type_count;
-  }
-  if (value == "concrete_type_count") {
-    return archscope::core::MetricId::concrete_type_count;
-  }
-  if (value == "type_count") {
-    return archscope::core::MetricId::type_count;
-  }
-  if (value == "distance_from_main_sequence") {
-    return archscope::core::MetricId::distance_from_main_sequence;
-  }
-  return std::nullopt;
-}
-
-std::optional<archscope::core::ModuleKind>
-ParseModuleKind(const std::string &value) {
-  if (value == "translation_unit") {
-    return archscope::core::ModuleKind::translation_unit;
-  }
-  if (value == "namespace") {
-    return archscope::core::ModuleKind::namespace_module;
-  }
-  if (value == "header") {
-    return archscope::core::ModuleKind::header;
-  }
-  if (value == "compilation_target") {
-    return archscope::core::ModuleKind::compilation_target;
-  }
-  return std::nullopt;
-}
-
 bool parse_positional_arguments(const std::vector<std::string> &args,
                                 CliOptions &options, std::size_t &index,
                                 CliParseError &error) {
@@ -141,7 +102,7 @@ bool parse_positional_arguments(const std::vector<std::string> &args,
       break;
     }
 
-    const auto metric = ParseMetricId(argument);
+    const auto metric = archscope::core::parse_metric_id(argument);
     if (!metric.has_value()) {
       error = build_parse_error("unsupported metric", "metric", argument);
       return false;
@@ -155,8 +116,8 @@ bool parse_positional_arguments(const std::vector<std::string> &args,
 bool parse_option_argument(const std::string &argument, CliOptions &options,
                            bool &module_option_seen, CliParseError &error) {
   if (argument.rfind("--module=", 0) == 0) {
-    const auto module_kind =
-        ParseModuleKind(argument.substr(std::string("--module=").size()));
+    const auto module_kind = archscope::core::parse_module_kind(
+        argument.substr(std::string("--module=").size()));
     if (!module_kind.has_value()) {
       error = build_parse_error("unsupported module kind", "option", argument);
       return false;
