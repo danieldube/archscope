@@ -54,6 +54,9 @@ add_library(
   src/core/cli_text.cpp
   src/core/cli_tokens.cpp
   src/core/compilation_database.cpp
+  src/core/compilation_database_loader.cpp
+  src/core/compile_commands_decoder.cpp
+  src/core/json_value.cpp
   src/core/metrics.cpp
   src/core/module_filter.cpp
   src/core/report.cpp
@@ -91,10 +94,12 @@ if(BUILD_TESTING)
     tests/unit/cli_text_tests.cpp
     tests/unit/cli_tokens_tests.cpp
     tests/unit/clang_tool_runner_tests.cpp
+    tests/unit/compile_commands_decoder_tests.cpp
     tests/unit/compilation_database_loader_tests.cpp
     tests/unit/dependency_graph_builder_tests.cpp
     tests/unit/distance_metric_tests.cpp
     tests/unit/instability_metric_tests.cpp
+    tests/unit/json_value_tests.cpp
     tests/unit/metric_registry_tests.cpp
     tests/unit/module_filter_tests.cpp
     tests/unit/namespace_module_resolver_tests.cpp
