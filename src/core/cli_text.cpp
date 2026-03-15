@@ -17,20 +17,19 @@ std::string HelpText() {
           "Options:\n";
   help += "  --module=<kind>         Module kind (supported: " +
           supported_module_kinds_text() + ").\n";
-  help +=
-      "  --module-filter=<text>  Filter output modules. Namespace "
-      "filters use prefix matching; translation-unit and header "
-      "filters use substring matching; compilation-target filters "
-      "use exact matching.\n"
-      "  --report=<path>         Output Markdown report path.\n"
-      "  --project-name=<name>   Override the project name shown in the "
-      "report.\n"
-      "  --threads=<n>           Requested analysis parallelism for "
-      "per-translation-unit extraction.\n"
-      "  --verbose               Emit progress logs and extended error "
-      "context to stderr.\n"
-      "  --help                  Show this help message and exit.\n"
-      "  --version               Show the executable version and exit.\n";
+  help += "  --module-filter=<text>  Filter output modules. Namespace "
+          "filters use prefix matching; translation-unit and header "
+          "filters use substring matching; compilation-target filters "
+          "use exact matching.\n"
+          "  --report=<path>         Output Markdown report path.\n"
+          "  --project-name=<name>   Override the project name shown in the "
+          "report.\n"
+          "  --threads=<n>           Requested analysis parallelism for "
+          "per-translation-unit extraction.\n"
+          "  --verbose               Emit progress logs and extended error "
+          "context to stderr.\n"
+          "  --help                  Show this help message and exit.\n"
+          "  --version               Show the executable version and exit.\n";
   return help;
 }
 

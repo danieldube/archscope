@@ -38,7 +38,8 @@ std::optional<Enum> parse_token(const std::array<TokenEntry<Enum>, N> &entries,
 }
 
 template <typename Enum, std::size_t N>
-std::string supported_token_text(const std::array<TokenEntry<Enum>, N> &entries) {
+std::string
+supported_token_text(const std::array<TokenEntry<Enum>, N> &entries) {
   std::string text;
   for (std::size_t index = 0; index < entries.size(); ++index) {
     if (index > 0U) {

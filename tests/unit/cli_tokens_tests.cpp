@@ -1,8 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "core/analysis.hpp"
 #include "core/cli_tokens.hpp"
-#include "core/report.hpp"
 
 #include <optional>
 
@@ -32,7 +30,8 @@ TEST_CASE("parse_metric_id rejects unsupported metric ids", "[cli][tokens]") {
   REQUIRE_FALSE(archscope::core::parse_metric_id("").has_value());
 }
 
-TEST_CASE("parse_module_kind resolves supported module kinds", "[cli][tokens]") {
+TEST_CASE("parse_module_kind resolves supported module kinds",
+          "[cli][tokens]") {
   REQUIRE(archscope::core::parse_module_kind("translation_unit") ==
           std::optional<archscope::core::ModuleKind>{
               archscope::core::ModuleKind::translation_unit});
