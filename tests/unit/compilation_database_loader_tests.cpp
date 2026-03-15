@@ -90,6 +90,7 @@ TEST_CASE("loader reports a missing compile_commands json file",
   REQUIRE(result.error().code ==
           archscope::core::CompilationDatabaseErrorCode::file_not_found);
   REQUIRE(result.error().message.find("missing") != std::string::npos);
+  REQUIRE(result.error().context == missing_path.string());
 }
 
 TEST_CASE("loader reports invalid json content", "[compilation-database]") {
@@ -110,6 +111,7 @@ TEST_CASE("loader reports invalid json content", "[compilation-database]") {
   REQUIRE(result.error().code ==
           archscope::core::CompilationDatabaseErrorCode::invalid_format);
   REQUIRE(result.error().message.find("invalid") != std::string::npos);
+  REQUIRE(result.error().context == db_path.string());
 }
 
 TEST_CASE("loader extracts translation unit paths and compile arguments",

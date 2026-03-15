@@ -1,10 +1,9 @@
 #pragma once
 
+#include "common/result.hpp"
 #include "core/compilation_database.hpp"
 
-#include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace archscope::clang_backend {
@@ -61,28 +60,7 @@ struct ToolRunnerError {
   std::vector<std::string> failed_translation_units;
 };
 
-template <typename T> class Result {
-public:
-  static Result success(T value) { return Result(std::move(value)); }
-
-  static Result failure(ToolRunnerError error) {
-    return Result(std::move(error));
-  }
-
-  [[nodiscard]] bool has_value() const { return value_.has_value(); }
-
-  [[nodiscard]] const T &value() const { return *value_; }
-
-  [[nodiscard]] const ToolRunnerError &error() const { return *error_; }
-
-private:
-  explicit Result(T value) : value_(std::move(value)) {}
-
-  explicit Result(ToolRunnerError error) : error_(std::move(error)) {}
-
-  std::optional<T> value_;
-  std::optional<ToolRunnerError> error_;
-};
+template <typename T> using Result = common::Result<T, ToolRunnerError>;
 
 Result<ExtractionResult>
 extract_analysis(const core::CompilationDatabase &database,
