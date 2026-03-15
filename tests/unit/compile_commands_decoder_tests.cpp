@@ -9,8 +9,8 @@
 
 TEST_CASE("decoder prefers arguments array over command string",
           "[compile-commands-decoder]") {
-    const archscope::core::JsonValue root = archscope::core::parse_json(
-        R"json([
+  const archscope::core::JsonValue root = archscope::core::parse_json(
+      R"json([
   {
     "directory": "/workspace/project",
     "file": "src/main.cpp",
@@ -19,19 +19,19 @@ TEST_CASE("decoder prefers arguments array over command string",
   }
 ])json");
 
-    const archscope::core::CompilationDatabase database =
-        archscope::core::decode_compile_commands(
-            root, std::filesystem::path("/tmp/build/compile_commands.json"));
+  const archscope::core::CompilationDatabase database =
+      archscope::core::decode_compile_commands(
+          root, std::filesystem::path("/tmp/build/compile_commands.json"));
 
-    REQUIRE(database.entries.size() == 1U);
-    REQUIRE(database.entries[0].arguments ==
-            std::vector<std::string>{"clang++", "-c", "src/main.cpp"});
+  REQUIRE(database.entries.size() == 1U);
+  REQUIRE(database.entries[0].arguments ==
+          std::vector<std::string>{"clang++", "-c", "src/main.cpp"});
 }
 
 TEST_CASE("decoder derives target from output and -o argument fallback",
           "[compile-commands-decoder]") {
-    const archscope::core::JsonValue root = archscope::core::parse_json(
-        R"json([
+  const archscope::core::JsonValue root = archscope::core::parse_json(
+      R"json([
   {
     "directory": "/workspace/project",
     "file": "src/alpha.cpp",
@@ -45,15 +45,15 @@ TEST_CASE("decoder derives target from output and -o argument fallback",
   }
 ])json");
 
-    const archscope::core::CompilationDatabase database =
-        archscope::core::decode_compile_commands(
-            root, std::filesystem::path(
-                      "/workspace/project/out/compile_commands.json"));
+  const archscope::core::CompilationDatabase database =
+      archscope::core::decode_compile_commands(
+          root, std::filesystem::path(
+                    "/workspace/project/out/compile_commands.json"));
 
-    REQUIRE(database.entries.size() == 2U);
-    REQUIRE(database.entries[0].compilation_target == "domain_core");
-    REQUIRE(database.entries[1].working_directory ==
-            "/workspace/project/out/build");
-    REQUIRE(database.entries[1].compilation_target ==
-            "/workspace/project/out/build/objects/domain");
+  REQUIRE(database.entries.size() == 2U);
+  REQUIRE(database.entries[0].compilation_target == "domain_core");
+  REQUIRE(database.entries[1].working_directory ==
+          "/workspace/project/out/build");
+  REQUIRE(database.entries[1].compilation_target ==
+          "/workspace/project/out/build/objects/domain");
 }

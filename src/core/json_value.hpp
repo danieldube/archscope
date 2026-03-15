@@ -14,9 +14,9 @@ using JsonArray = std::vector<JsonValue>;
 using JsonObject = std::map<std::string, JsonValue>;
 
 struct JsonValue {
-    using Storage = std::variant<std::string, JsonArray, JsonObject>;
+  using Storage = std::variant<std::string, JsonArray, JsonObject>;
 
-    Storage storage;
+  Storage storage;
 };
 
 JsonValue parse_json(std::string_view text);
